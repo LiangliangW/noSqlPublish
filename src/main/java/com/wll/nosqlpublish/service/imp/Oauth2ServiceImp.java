@@ -352,12 +352,22 @@ public class Oauth2ServiceImp {
         header.put("Authorization", authString);
         String httpResult = HttpUtil.get(baseUrl, header, "utf-8");
 
+        logger.info("WLL's log: UserInfo: " + httpResult);
         return httpResult;
     }
 
-//    public String tweetTest(String test) {
-//        String httpMethod = "POST";
-//        String baseUrl = "https://api.twitter.com/1.1/statuses/update.json";
-//
-//    }
+    public String tweetTest(String text) {
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/1.1/statuses/update.json";
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("status", text);
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", authString);
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header, "utf-8");
+
+        logger.info("WLL's log: TweetResponse: " + httpResult);
+        return httpResult;
+    }
 }

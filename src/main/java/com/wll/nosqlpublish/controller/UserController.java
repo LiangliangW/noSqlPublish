@@ -47,7 +47,7 @@ public class UserController {
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     public String test() {
-        return "";
+        return oauth2ServiceImp.authTwitter();
     }
 
     @RequestMapping(value = "/authTwitter", method = RequestMethod.GET)
@@ -55,17 +55,28 @@ public class UserController {
         return oauth2ServiceImp.authTwitter();
     }
 
+//    @RequestMapping(value = "/getOauthVerifier", method = RequestMethod.GET)
+//    public Boolean getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
+//        if (oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier) != null) {
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
+
     @RequestMapping(value = "/getOauthVerifier", method = RequestMethod.GET)
-    public Boolean getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
-        if (oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier) != null) {
-            return true;
-        } else {
-            return false;
-        }
+    public String getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
+        Map accessToken = oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier);
+        return oauth2ServiceImp.tweetTest("Myfirsttwitterbycoding");
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
     public String getUserInfo() {
         return oauth2ServiceImp.getUserInfo();
+    }
+
+    @RequestMapping(value = "/tweet", method = RequestMethod.GET)
+    public String tweet() {
+        return oauth2ServiceImp.tweetTest("My first twitter by coding");
     }
 }
