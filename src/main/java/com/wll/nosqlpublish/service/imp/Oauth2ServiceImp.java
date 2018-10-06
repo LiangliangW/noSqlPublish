@@ -268,6 +268,47 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    public String authTwitter() {
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/request_token";
+        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
+        String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
+        String oauthSignatureMethod = "HMAC-SHA1";
+        String oauthTimestamp = String.valueOf(System.currentTimeMillis() / 1000);
+        String oauthVersion = "1.0";
+        String consumerSecret = "RICjgnsk1tOIXki5w2jTw6txf0NYdVYbgzYJd5MioW8fFuZBw9";
+
+        Map<String, String> params = new HashMap();
+        params.put("oauth_callback", oauthCallBack);
+        params.put("oauth_consumer_key", oauthConsumerKey);
+        params.put("oauth_nonce", getOauthNonce());
+        params.put("oauth_signature_method", oauthSignatureMethod);
+        params.put("oauth_timestamp", oauthTimestamp);
+        params.put("oauth_version", oauthVersion);
+
+        String signature = getSignature(httpMethod, baseUrl, params, consumerSecret, "");
+        params.put("oauth_signature", signature);
+        String authString = getAuthStringByParams(params);
+        Map<String, String> oauthTokenMap = getOauthToken(authString);
+        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
+        return result;
+    }
+
+    //因为 oauth_callback 没有放进 AuthString ，所以此方法不成功。若以后有类似需求，重写 getAuthString 方法
+    public String authTwitterPlus() {
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/request_token";
+
+        Map<String, String> bodyParams = new HashMap();
+        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
+        bodyParams.put("oauth_callback", oauthCallBack);
+
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+        Map<String, String> oauthTokenMap = getOauthToken(authString);
+        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
+        return result;
+    }
+
     public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
         logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
 

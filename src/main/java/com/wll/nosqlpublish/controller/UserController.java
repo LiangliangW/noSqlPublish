@@ -47,52 +47,25 @@ public class UserController {
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     public String test() {
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/request_token";
-
-        Map<String, String> bodyParams = new HashMap();
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
-        bodyParams.put("oauth_callback", oauthCallBack);
-
-        //因为 oauth_callback 没有放进 AuthString ，所以此方法不成功。若以后有类似需求，重写 getAuthString 方法
-        String authString = oauth2ServiceImp.getAuthString(httpMethod, baseUrl, bodyParams, null);
-        Map<String, String> oauthTokenMap = oauth2ServiceImp.getOauthToken(authString);
-        String result = oauth2ServiceImp.getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
-        return result;
+        return "";
     }
 
     @RequestMapping(value = "/authTwitter", method = RequestMethod.GET)
     public String authTwitter() throws UnsupportedEncodingException, SignatureException {
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/request_token";
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
-        String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
-        String oauthSignatureMethod = "HMAC-SHA1";
-        String oauthTimestamp = String.valueOf(System.currentTimeMillis() / 1000);
-        String oauthVersion = "1.0";
-        String consumerSecret = "RICjgnsk1tOIXki5w2jTw6txf0NYdVYbgzYJd5MioW8fFuZBw9";
-
-        Map<String, String> params = new HashMap();
-        params.put("oauth_callback", oauthCallBack);
-        params.put("oauth_consumer_key", oauthConsumerKey);
-        params.put("oauth_nonce", oauth2ServiceImp.getOauthNonce());
-        params.put("oauth_signature_method", oauthSignatureMethod);
-        params.put("oauth_timestamp", oauthTimestamp);
-        params.put("oauth_version", oauthVersion);
-
-        String signature = oauth2ServiceImp.getSignature(httpMethod, baseUrl, params, consumerSecret, "");
-        params.put("oauth_signature", signature);
-        String authString = oauth2ServiceImp.getAuthStringByParams(params);
-        Map<String, String> oauthTokenMap = oauth2ServiceImp.getOauthToken(authString);
-        String result = oauth2ServiceImp.getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
-        return result;
-
+        return oauth2ServiceImp.authTwitter();
     }
 
-    @RequestMapping(value = "getOauthVerifier", method = RequestMethod.GET)
-    public String getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
-        Map accessTokenMap = oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier);
+    @RequestMapping(value = "/getOauthVerifier", method = RequestMethod.GET)
+    public Boolean getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
+        if (oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier) != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
+    public String getUserInfo() {
         return oauth2ServiceImp.getUserInfo();
     }
-
 }
