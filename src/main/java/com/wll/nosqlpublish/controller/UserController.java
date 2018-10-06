@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.SignatureException;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,15 @@ public class UserController {
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
+    @RequestMapping(value = "/publishAll", method = RequestMethod.GET)
+    public String publishAll() {
+        String message = "publishAll";
+        String pageRes = oauth2ServiceImp.publishPage(message);
+        String groupRes = oauth2ServiceImp.publishGroup(message);
+        String twitterRes = oauth2ServiceImp.tweetTest(message);
+        return "OK";
+    }
+
     @GetMapping(value = "/oauth")
     public ModelAndView loginWithOauth() {
         //这个重定向，会访问两次，初始就访问一次，手动输入不会
@@ -38,11 +48,21 @@ public class UserController {
         logger.info("time: " + System.currentTimeMillis());
         String accessToken = oauth2ServiceImp.getAccessToken(code);
         logger.info("access_token: " + accessToken);
-//        String pageId = "239040333455132";
-//        String res = oauth2Service.publishPage(accessToken, pageId);
-        String groupId = "109289593293363";
-        String res = oauth2ServiceImp.publishGroup(accessToken, groupId);
-        return res;
+        return accessToken;
+    }
+
+    @RequestMapping(value = "/publishPage", method = RequestMethod.GET)
+    public String publishPage() {
+        String message = "publish FaceBook page";
+        String pageRes = oauth2ServiceImp.publishPage(message);
+        return pageRes;
+    }
+
+    @RequestMapping(value = "/publishGroup", method = RequestMethod.GET)
+    public String publishGroup() {
+        String message = "publish FaceBook group";
+        String groupRes = oauth2ServiceImp.publishGroup(message);
+        return groupRes;
     }
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
@@ -77,16 +97,6 @@ public class UserController {
 
     @RequestMapping(value = "/tweet", method = RequestMethod.GET)
     public String tweet() {
-        return oauth2ServiceImp.tweetTest("Mysecondtwitterbycoding");
-    }
-
-    @RequestMapping(value = "/tweet1", method = RequestMethod.GET)
-    public String tweet1() {
-        return oauth2ServiceImp.tweetTest("My secondtwitterbycoding");
-    }
-
-    @RequestMapping(value = "/tweet2", method = RequestMethod.GET)
-    public String tweet2() {
-        return oauth2ServiceImp.tweetTest("Mysecondtwitterbycoding!");
+        return oauth2ServiceImp.tweetTest("测试一起发");
     }
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class Oauth2ServiceImp {
     private String oauthToken;
     private String oauthTokenSecret;
 
+    private String facebookAccessToken;
+
     protected final Log logger = LogFactory.getLog(this.getClass());
 
     public String getAccessToken(String code){
@@ -37,13 +40,16 @@ public class Oauth2ServiceImp {
             + "&code=" + code;
         String res =  HttpUtil.get(accessTokenUrl);
         JSONObject jsonObject = JSONObject.parseObject(res);
-        return jsonObject.getString("access_token");
+        String accessToken = jsonObject.getString("access_token");
+        this.facebookAccessToken = accessToken;
+        return accessToken;
     }
 
-    public String publishPage(String accessToken, String pageId) {
+    public String publishPage(String message) {
+        String pageId = "239040333455132";
         //获取主页的accessToken
         String getPageAccessToken = "https://graph.facebook.com/v3.1/me/accounts";
-        JSONObject json = HttpUtil.getJsonObject(getPageAccessToken + "?access_token="+accessToken);
+        JSONObject json = HttpUtil.getJsonObject(getPageAccessToken + "?access_token="+ this.facebookAccessToken);
         logger.info("json: " + json);
         JSONArray jsonArray = (JSONArray)json.get("data");
         JSONObject page1 = null;
@@ -62,7 +68,6 @@ public class Oauth2ServiceImp {
 
 
         //调用以主页身份发帖api
-        String message = "This is a message from focus" + System.currentTimeMillis();
         logger.info("message: " + message);
         Map<String, String> pageParams = new HashMap<>();
         String publishPageUrl = "https://graph.facebook.com/v3.1/" + pargeId + "/feed";
@@ -73,12 +78,12 @@ public class Oauth2ServiceImp {
         return res;
     }
 
-    public String publishGroup(String accessToken, String groupId){
-        String message = "为什么一次发两条";
+    public String publishGroup(String message){
+        String groupId = "109289593293363";
         Map<String, String> groupParams = new HashMap<>();
         String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + "/feed";
         groupParams.put("message", message);
-        groupParams.put("access_token", accessToken);
+        groupParams.put("access_token", this.facebookAccessToken);
         String res  = HttpUtil.post(publishGroupUrl, groupParams);
         return res;
     }
@@ -252,6 +257,40 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
+        logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
+
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/access_token";
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("oauth_verifier", oauthVerifier);
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+
+        Map<String, String> header = new HashMap<String, String>();
+        header.put("Authorization", authString);
+        Map<String, String> body = new HashMap<String, String>();
+        body.put("oauth_verifier", oauthVerifier);
+        String httpResult = HttpUtil.post(baseUrl, body, header, "UTF-8");
+        logger.info("WLL's log: accessToken: " + httpResult);
+
+        String[] accessTokenResults = httpResult.split("&");
+        if (accessTokenResults[0].substring(0, accessTokenResults[0].indexOf('=')).equals("oauth_token")){
+            String oauthToken = accessTokenResults[0].substring(accessTokenResults[0].indexOf('=') + 1);
+            String oauthTokenSecret = accessTokenResults[1].substring(accessTokenResults[1].indexOf('=') + 1);
+
+            Map<String, String> authResultMap = new HashMap<String, String>();
+            authResultMap.put("oauthToken", oauthToken);
+            authResultMap.put("oauthTokenSecret", oauthTokenSecret);
+
+            this.oauthToken = oauthToken;
+            this.oauthTokenSecret = oauthTokenSecret;
+
+            return authResultMap;
+        } else {
+            return null;
+        }
+    }
+
     public String authTwitter() {
         String httpMethod = "POST";
         String baseUrl = "https://api.twitter.com/oauth/request_token";
@@ -291,40 +330,6 @@ public class Oauth2ServiceImp {
         Map<String, String> oauthTokenMap = getOauthToken(authString);
         String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
         return result;
-    }
-
-    public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
-        logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
-
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/access_token";
-        Map<String, String> bodyParams = new HashMap<>();
-        bodyParams.put("oauth_verifier", oauthVerifier);
-        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
-
-        Map<String, String> header = new HashMap<String, String>();
-        header.put("Authorization", authString);
-        Map<String, String> body = new HashMap<String, String>();
-        body.put("oauth_verifier", oauthVerifier);
-        String httpResult = HttpUtil.post(baseUrl, body, header, "UTF-8");
-        logger.info("WLL's log: accessToken: " + httpResult);
-
-        String[] accessTokenResults = httpResult.split("&");
-        if (accessTokenResults[0].substring(0, accessTokenResults[0].indexOf('=')).equals("oauth_token")){
-            String oauthToken = accessTokenResults[0].substring(accessTokenResults[0].indexOf('=') + 1);
-            String oauthTokenSecret = accessTokenResults[1].substring(accessTokenResults[1].indexOf('=') + 1);
-
-            Map<String, String> authResultMap = new HashMap<String, String>();
-            authResultMap.put("oauthToken", oauthToken);
-            authResultMap.put("oauthTokenSecret", oauthTokenSecret);
-
-            this.oauthToken = oauthToken;
-            this.oauthTokenSecret = oauthTokenSecret;
-
-            return authResultMap;
-        } else {
-            return null;
-        }
     }
 
     public String getUserInfo() {
