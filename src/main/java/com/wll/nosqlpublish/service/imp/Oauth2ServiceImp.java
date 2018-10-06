@@ -1,7 +1,5 @@
 package com.wll.nosqlpublish.service.imp;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.security.SignatureException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,6 +16,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.wll.nosqlpublish.util.HmacSha1Util;
 import com.wll.nosqlpublish.util.HttpUtil;
+import com.wll.nosqlpublish.util.UrlEncodeUtil;
 
 @Service
 public class Oauth2ServiceImp {
@@ -108,11 +107,8 @@ public class Oauth2ServiceImp {
         Iterator<Map.Entry<String, String>> entries = params.entrySet().iterator();
         while (entries.hasNext()) {
             Map.Entry<String, String> entry = entries.next();
-            try {
-                sortedParams.put(URLEncoder.encode(entry.getKey(), "utf-8"), URLEncoder.encode(entry.getValue(), "utf-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+            sortedParams.put(UrlEncodeUtil.encode(entry.getKey()), UrlEncodeUtil.encode(entry.getValue()));
+
         }
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -130,13 +126,9 @@ public class Oauth2ServiceImp {
 
     public String getBaseString(String httpMethod, String baseUrl, String params) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(httpMethod + '&');
-        try {
-            stringBuilder.append(URLEncoder.encode(baseUrl, "utf-8") + '&');
-            stringBuilder.append(URLEncoder.encode(params, "utf-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        stringBuilder.append(UrlEncodeUtil.encode(httpMethod) + '&');
+        stringBuilder.append(UrlEncodeUtil.encode(baseUrl) + '&');
+        stringBuilder.append(UrlEncodeUtil.encode(params));
 
         String result = stringBuilder.toString();
         logger.info("WLL's log: SignatureBaseString: " + result);
@@ -145,13 +137,9 @@ public class Oauth2ServiceImp {
 
     public String getSigningKey(String consumerSecret, String oAuthTokenSecret) {
         StringBuilder stringBuilder = new StringBuilder();
-        try {
-            stringBuilder.append(URLEncoder.encode(consumerSecret, "utf-8") + '&');
-            if (this.oauthTokenSecret != null) {
-                stringBuilder.append(URLEncoder.encode(oAuthTokenSecret, "utf-8"));
-            }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        stringBuilder.append(UrlEncodeUtil.encode(consumerSecret) + '&');
+        if (this.oauthTokenSecret != null) {
+            stringBuilder.append(UrlEncodeUtil.encode(oAuthTokenSecret));
         }
 
         String result = stringBuilder.toString();
@@ -185,11 +173,7 @@ public class Oauth2ServiceImp {
         Iterator<Map.Entry<String, String>> entryIterator = params.entrySet().iterator();
         while (entryIterator.hasNext()) {
             Map.Entry<String, String> entry = entryIterator.next();
-            try {
-                stringBuilder.append(URLEncoder.encode(entry.getKey(), "utf-8") + "=\"" + URLEncoder.encode(entry.getValue(), "utf-8") + "\", ");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+            stringBuilder.append(UrlEncodeUtil.encode(entry.getKey()) + "=\"" + UrlEncodeUtil.encode(entry.getValue()) + "\", ");
         }
         //删掉最后的逗号和空格
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
@@ -365,7 +349,9 @@ public class Oauth2ServiceImp {
 
         Map<String, String> header = new HashMap<>();
         header.put("Authorization", authString);
-        String httpResult = HttpUtil.post(baseUrl, bodyParams, header, "utf-8");
+        Map<String, String> body = new HashMap<>();
+        body.put("status", UrlEncodeUtil.encode(text));
+        String httpResult = HttpUtil.post(baseUrl, body, header, "utf-8");
 
         logger.info("WLL's log: TweetResponse: " + httpResult);
         return httpResult;

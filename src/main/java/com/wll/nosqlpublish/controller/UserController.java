@@ -2,7 +2,6 @@ package com.wll.nosqlpublish.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.security.SignatureException;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -17,6 +16,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
 import com.wll.nosqlpublish.service.imp.Oauth2ServiceImp;
+import com.wll.nosqlpublish.util.UrlEncodeUtil;
 
 @RestController
 @RequestMapping(value = "/")
@@ -46,8 +46,8 @@ public class UserController {
     }
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
-    public String test() {
-        return oauth2ServiceImp.authTwitter();
+    public String test() throws UnsupportedEncodingException {
+        return UrlEncodeUtil.encode("My first twitter by coding");
     }
 
     @RequestMapping(value = "/authTwitter", method = RequestMethod.GET)
@@ -67,7 +67,7 @@ public class UserController {
     @RequestMapping(value = "/getOauthVerifier", method = RequestMethod.GET)
     public String getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
         Map accessToken = oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier);
-        return oauth2ServiceImp.tweetTest("Myfirsttwitterbycoding");
+        return "";
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
@@ -77,6 +77,16 @@ public class UserController {
 
     @RequestMapping(value = "/tweet", method = RequestMethod.GET)
     public String tweet() {
-        return oauth2ServiceImp.tweetTest("My first twitter by coding");
+        return oauth2ServiceImp.tweetTest("Mysecondtwitterbycoding");
+    }
+
+    @RequestMapping(value = "/tweet1", method = RequestMethod.GET)
+    public String tweet1() {
+        return oauth2ServiceImp.tweetTest("My secondtwitterbycoding");
+    }
+
+    @RequestMapping(value = "/tweet2", method = RequestMethod.GET)
+    public String tweet2() {
+        return oauth2ServiceImp.tweetTest("Mysecondtwitterbycoding!");
     }
 }
