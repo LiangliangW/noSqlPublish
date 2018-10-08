@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
@@ -29,10 +28,15 @@ public class Oauth2ServiceImp {
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
+    public String loginFacebook() {
+        String loginUrl = "https://www.facebook.com/dialog/oauth?client_id=469354166884422&redirect_uri=https://localhost:8080/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups";
+        return HttpUtil.get(loginUrl);
+    }
+
     public String getAccessToken(String code){
         String appId = "469354166884422";
         String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
-        String redirectUri = "http://localhost:8080/code";
+        String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
             + "&redirect_uri=" + redirectUri
@@ -42,6 +46,7 @@ public class Oauth2ServiceImp {
         JSONObject jsonObject = JSONObject.parseObject(res);
         String accessToken = jsonObject.getString("access_token");
         this.facebookAccessToken = accessToken;
+        logger.info("WLL's log: After Facebook oauthToken: " + this.oauthToken);
         return accessToken;
     }
 
@@ -257,6 +262,47 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    public String authTwitter() {
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/request_token";
+        String oauthCallBack = "https://127.0.0.1:8443/getOauthVerifier";
+        String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
+        String oauthSignatureMethod = "HMAC-SHA1";
+        String oauthTimestamp = String.valueOf(System.currentTimeMillis() / 1000);
+        String oauthVersion = "1.0";
+        String consumerSecret = "RICjgnsk1tOIXki5w2jTw6txf0NYdVYbgzYJd5MioW8fFuZBw9";
+
+        Map<String, String> params = new HashMap();
+        params.put("oauth_callback", oauthCallBack);
+        params.put("oauth_consumer_key", oauthConsumerKey);
+        params.put("oauth_nonce", getOauthNonce());
+        params.put("oauth_signature_method", oauthSignatureMethod);
+        params.put("oauth_timestamp", oauthTimestamp);
+        params.put("oauth_version", oauthVersion);
+
+        String signature = getSignature(httpMethod, baseUrl, params, consumerSecret, "");
+        params.put("oauth_signature", signature);
+        String authString = getAuthStringByParams(params);
+        Map<String, String> oauthTokenMap = getOauthToken(authString);
+        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
+        return result;
+    }
+
+    //因为 oauth_callback 没有放进 AuthString ，所以此方法不成功。若以后有类似需求，重写 getAuthString 方法
+    public String authTwitterPlus() {
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/request_token";
+
+        Map<String, String> bodyParams = new HashMap();
+        String oauthCallBack = "https://127.0.0.1:8443/getOauthVerifier";
+        bodyParams.put("oauth_callback", oauthCallBack);
+
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+        Map<String, String> oauthTokenMap = getOauthToken(authString);
+        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
+        return result;
+    }
+
     public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
         logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
 
@@ -289,47 +335,6 @@ public class Oauth2ServiceImp {
         } else {
             return null;
         }
-    }
-
-    public String authTwitter() {
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/request_token";
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
-        String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
-        String oauthSignatureMethod = "HMAC-SHA1";
-        String oauthTimestamp = String.valueOf(System.currentTimeMillis() / 1000);
-        String oauthVersion = "1.0";
-        String consumerSecret = "RICjgnsk1tOIXki5w2jTw6txf0NYdVYbgzYJd5MioW8fFuZBw9";
-
-        Map<String, String> params = new HashMap();
-        params.put("oauth_callback", oauthCallBack);
-        params.put("oauth_consumer_key", oauthConsumerKey);
-        params.put("oauth_nonce", getOauthNonce());
-        params.put("oauth_signature_method", oauthSignatureMethod);
-        params.put("oauth_timestamp", oauthTimestamp);
-        params.put("oauth_version", oauthVersion);
-
-        String signature = getSignature(httpMethod, baseUrl, params, consumerSecret, "");
-        params.put("oauth_signature", signature);
-        String authString = getAuthStringByParams(params);
-        Map<String, String> oauthTokenMap = getOauthToken(authString);
-        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
-        return result;
-    }
-
-    //因为 oauth_callback 没有放进 AuthString ，所以此方法不成功。若以后有类似需求，重写 getAuthString 方法
-    public String authTwitterPlus() {
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/request_token";
-
-        Map<String, String> bodyParams = new HashMap();
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
-        bodyParams.put("oauth_callback", oauthCallBack);
-
-        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
-        Map<String, String> oauthTokenMap = getOauthToken(authString);
-        String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
-        return result;
     }
 
     public String getUserInfo() {
