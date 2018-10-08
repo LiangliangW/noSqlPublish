@@ -11,6 +11,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
@@ -22,32 +23,42 @@ import com.wll.nosqlpublish.util.UrlEncodeUtil;
 @Service
 public class Oauth2ServiceImp {
 
-    private String oauthToken;
+
+    @Value("${access_token.twitter.oauthToken}")
+    public String oauthToken;
+    @Value("${access_token.twitter.oauthTokenSecret}")
     private String oauthTokenSecret;
 
-    private String facebookAccessToken;
+    @Value("${access_token.facebook}")
+    public String facebookAccessToken;
+
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
     public String getAccessToken(String code){
-        String appId = "469354166884422";
-        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
-        String redirectUri = "http://localhost:8080/code";
+        String appId = "549957782114948";
+        String clientSecret = "081a70850ac47341c3fd7bc466d5b827";
+        String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
             + "&redirect_uri=" + redirectUri
             + "&client_secret=" + clientSecret
             + "&code=" + code;
         String res =  HttpUtil.get(accessTokenUrl);
+        logger.info(res);
         JSONObject jsonObject = JSONObject.parseObject(res);
         String accessToken = jsonObject.getString("access_token");
         this.facebookAccessToken = accessToken;
         return accessToken;
     }
 
-    public String publishPage(String message) {
-        String pageId = "239040333455132";
-        //获取主页的accessToken
+    /**
+     * 根据用户的accessToken获取主页的accessToken
+     * @param pageId
+     * @return
+     */
+    private String getPageAccessToken(String pageId) {
+
         String getPageAccessToken = "https://graph.facebook.com/v3.1/me/accounts";
         JSONObject json = HttpUtil.getJsonObject(getPageAccessToken + "?access_token="+ this.facebookAccessToken);
         logger.info("json: " + json);
@@ -62,30 +73,110 @@ public class Oauth2ServiceImp {
             logger.error("pageId： " + pageId + "不存在");
             return "pageId： " + pageId + "不存在";
         }
-
         String pageAccessToken = page1.getString("access_token");
-        String pargeId = page1.getString("id");
+        return pageAccessToken;
+    }
 
-
+    /**
+     * 以主页身份发帖
+     * @param pageParams
+     * @return
+     */
+    public String publishPage(Map<String, String> pageParams, String targetUrl) {
+        String pageId = "239040333455132";
+        //根据accessToken获取pageAccessToken
+        String pageAccessToken = getPageAccessToken(pageId);
         //调用以主页身份发帖api
-        logger.info("message: " + message);
-        Map<String, String> pageParams = new HashMap<>();
-        String publishPageUrl = "https://graph.facebook.com/v3.1/" + pargeId + "/feed";
-        pageParams.put("message", message);
         pageParams.put("access_token", pageAccessToken);
+        logger.info("pageParams: " + pageParams);
+        String publishPageUrl = "https://graph.facebook.com/v3.1/" + pageId + targetUrl;
         String res  = HttpUtil.post(publishPageUrl, pageParams);
         logger.info(res);
         return res;
     }
 
-    public String publishGroup(String message){
-        String groupId = "109289593293363";
-        Map<String, String> groupParams = new HashMap<>();
-        String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + "/feed";
-        groupParams.put("message", message);
+    /**
+     * 以主页身份发布文字帖子
+     * @param message
+     * @return
+     */
+    public String publishPageWithCharacters(String message) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("message", message);
+        return publishPage(pageParams, "/feed");
+    }
+
+    /**
+     * 以主页身份发布图片帖子
+     * @param url
+     * @return
+     */
+    public String publishPageWithPhoto(String url) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("url", url);
+        return publishPage(pageParams, "/photos");
+    }
+
+    /**
+     * 以主页身份发布视频帖子
+     * @param file_url
+     * @return
+     */
+    public String publishPageWithVideo(String file_url) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("file_url", file_url);
+        pageParams.put("name", "focus server upload video");
+        pageParams.put("description", "This video is uploaded from foucs server");
+        return publishPage(pageParams, "/videos");
+    }
+
+    /**
+     * 向小组发帖
+     * @param message
+     * @return
+     */
+    private String publishGroup(Map<String, String> groupParams, String targetUrl){
+        String groupId = "473186779854545";
+
+        String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + targetUrl;
         groupParams.put("access_token", this.facebookAccessToken);
         String res  = HttpUtil.post(publishGroupUrl, groupParams);
         return res;
+    }
+
+    /**
+     * 在小组中发布文字帖子
+     * @param message
+     * @return
+     */
+    public String publishGroupWithCharacters(String message) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("message", message);
+        return publishGroup(pageParams, "/feed");
+    }
+
+    /**
+     * 在小组中发布图片帖子
+     * @param url
+     * @return
+     */
+    public String publishGroupWithPhoto(String url) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("url", url);
+        return publishGroup(pageParams, "/photos");
+    }
+
+    /**
+     * 在小组中发布视频帖子
+     * @param file_url
+     * @return
+     */
+    public String publishGroupWithVideo(String file_url) {
+        Map<String, String> pageParams = new HashMap<>();
+        pageParams.put("file_url", file_url);
+        pageParams.put("name", "focus server upload video");
+        pageParams.put("description", "This video is uploaded from foucs server");
+        return publishGroup(pageParams, "/videos");
     }
 
 
@@ -204,6 +295,7 @@ public class Oauth2ServiceImp {
         authParams.put("oauth_timestamp", oauthTimestamp);
         authParams.put("oauth_version", oauthVersion);
         if (this.oauthToken != null) {
+            logger.info("hinson's oauthToken: " + this.oauthToken);
             authParams.put("oauth_token", this.oauthToken);
         }
 
@@ -244,6 +336,8 @@ public class Oauth2ServiceImp {
 
             this.oauthToken = oauthToken;
             this.oauthTokenSecret = oauthTokenSecret;
+            logger.info("hinson'log: " + this.oauthToken);
+            logger.info("hinson'log: " + this.oauthTokenSecret);
 
             return authResultMap;
         } else {
@@ -294,7 +388,7 @@ public class Oauth2ServiceImp {
     public String authTwitter() {
         String httpMethod = "POST";
         String baseUrl = "https://api.twitter.com/oauth/request_token";
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
+        String oauthCallBack = "https://127.0.0.1:8443/getOauthVerifier";
         String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
         String oauthSignatureMethod = "HMAC-SHA1";
         String oauthTimestamp = String.valueOf(System.currentTimeMillis() / 1000);
@@ -323,7 +417,7 @@ public class Oauth2ServiceImp {
         String baseUrl = "https://api.twitter.com/oauth/request_token";
 
         Map<String, String> bodyParams = new HashMap();
-        String oauthCallBack = "http://127.0.0.1:8080/getOauthVerifier";
+        String oauthCallBack = "https://127.0.0.1:8443/getOauthVerifier";
         bodyParams.put("oauth_callback", oauthCallBack);
 
         String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);

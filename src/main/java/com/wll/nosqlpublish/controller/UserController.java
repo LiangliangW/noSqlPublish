@@ -2,6 +2,8 @@ package com.wll.nosqlpublish.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.security.SignatureException;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,9 +32,11 @@ public class UserController {
 
     @RequestMapping(value = "/publishAll", method = RequestMethod.GET)
     public String publishAll() {
-        String message = "publishAll";
-        String pageRes = oauth2ServiceImp.publishPage(message);
-        String groupRes = oauth2ServiceImp.publishGroup(message);
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = dateformat.format(System.currentTimeMillis());
+        String message = "publishAll: " + dateStr;
+        String pageRes = oauth2ServiceImp.publishPageWithCharacters(message);
+        String groupRes = oauth2ServiceImp.publishGroupWithCharacters(message);
         String twitterRes = oauth2ServiceImp.tweetTest(message);
         return "OK";
     }
@@ -40,7 +44,9 @@ public class UserController {
     @GetMapping(value = "/oauth")
     public ModelAndView loginWithOauth() {
         //这个重定向，会访问两次，初始就访问一次，手动输入不会
-        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?client_id=469354166884422&redirect_uri=http://localhost:8080/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
+        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?"
+            + "client_id=549957782114948"
+            + "&redirect_uri=https://localhost:8443/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
     }
 
     @GetMapping(value = "/code")
@@ -51,17 +57,55 @@ public class UserController {
         return accessToken;
     }
 
-    @RequestMapping(value = "/publishPage", method = RequestMethod.GET)
-    public String publishPage() {
+    //主页发布文字帖子
+    @RequestMapping(value = "/publishPage1", method = RequestMethod.GET)
+    public String publishPage1() {
         String message = "publish FaceBook page";
-        String pageRes = oauth2ServiceImp.publishPage(message);
+        String pageRes = oauth2ServiceImp.publishPageWithCharacters(message);
         return pageRes;
     }
+    //主页发布图片
+    @RequestMapping(value = "/publishPage2", method = RequestMethod.GET)
+    public String publishPage2() {
+        String url = "http://oyf9q4qzp.bkt.clouddn.com/1513493085.jpeg";
+        String pageRes = oauth2ServiceImp.publishPageWithPhoto(url);
+        return pageRes;
+    }
+    //主页发布视频
+    @RequestMapping(value = "/publishPage3", method = RequestMethod.GET)
+    public String publishPage3() {
+        String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
+        String pageRes = oauth2ServiceImp.publishPageWithVideo(file_url);
+        return pageRes;
+    }
+
+    //在小组中发布文字帖子
+    @RequestMapping(value = "/publishGroup1", method = RequestMethod.GET)
+    public String publishGroup1() {
+        String message = "publish FaceBook page";
+        String pageRes = oauth2ServiceImp.publishGroupWithCharacters(message);
+        return pageRes;
+    }
+    //在小组中发布图片
+    @RequestMapping(value = "/publishGroup2", method = RequestMethod.GET)
+    public String publishGroup2() {
+        String url = "http://oyf9q4qzp.bkt.clouddn.com/1514099374.jpeg";
+        String pageRes = oauth2ServiceImp.publishGroupWithPhoto(url);
+        return pageRes;
+    }
+    //在小组中发布视频
+    @RequestMapping(value = "/publishGroup3", method = RequestMethod.GET)
+    public String publishGroup3() {
+        String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
+        String pageRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
+        return pageRes;
+    }
+
 
     @RequestMapping(value = "/publishGroup", method = RequestMethod.GET)
     public String publishGroup() {
         String message = "publish FaceBook group";
-        String groupRes = oauth2ServiceImp.publishGroup(message);
+        String groupRes = oauth2ServiceImp.publishGroupWithCharacters(message);
         return groupRes;
     }
 
@@ -97,6 +141,6 @@ public class UserController {
 
     @RequestMapping(value = "/tweet", method = RequestMethod.GET)
     public String tweet() {
-        return oauth2ServiceImp.tweetTest("测试一起发");
+        return oauth2ServiceImp.tweetTest("测试一起发" + System.currentTimeMillis());
     }
 }

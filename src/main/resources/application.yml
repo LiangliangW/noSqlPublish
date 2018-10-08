@@ -1,0 +1,16 @@
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+access_token:
+  facebook: EAAH0LwYZBkoQBAHvuV4hLN1tHUBPgI1LrH9oKAoFrJw7YNL1XyInlk8XimlAZC8RczBHe79dWIxvaBRqGO1F1dhQ3qwg1e94PUQh43JtsjFMnwp6pE03V1es5uY0dNP3HLVDXZAeUYISqI2tizc1BQDS7MgtNOhOKcJavvYWAZDZD
+  twitter:
+    oauthToken: 4F-LnAAAAAAA8mPxAAABZlJQ_-c
+    oauthTokenSecret: fjOe278P2zmsWGESSV9mGFudDxkjscyc
+
+server:
+  port: 8443
+  ssl:
+    key-store: classpath:mykeys.jks
+    key-password: overseasapp
+    key-store-password: overseasapp
