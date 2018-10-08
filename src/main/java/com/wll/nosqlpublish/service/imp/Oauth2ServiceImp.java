@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +34,14 @@ public class Oauth2ServiceImp {
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
+    public String loginFacebook() {
+        String loginUrl = "https://www.facebook.com/dialog/oauth?client_id=469354166884422&redirect_uri=https://localhost:8080/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups";
+        return HttpUtil.get(loginUrl);
+    }
+
     public String getAccessToken(String code){
-        String appId = "549957782114948";
-        String clientSecret = "081a70850ac47341c3fd7bc466d5b827";
+        String appId = "469354166884422";
+        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
         String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
@@ -49,6 +53,7 @@ public class Oauth2ServiceImp {
         JSONObject jsonObject = JSONObject.parseObject(res);
         String accessToken = jsonObject.getString("access_token");
         this.facebookAccessToken = accessToken;
+        logger.info("WLL's log: After Facebook oauthToken: " + this.oauthToken);
         return accessToken;
     }
 
@@ -132,7 +137,7 @@ public class Oauth2ServiceImp {
 
     /**
      * 向小组发帖
-     * @param message
+     * @param groupParams, targetUrl
      * @return
      */
     private String publishGroup(Map<String, String> groupParams, String targetUrl){
@@ -351,40 +356,6 @@ public class Oauth2ServiceImp {
         return result;
     }
 
-    public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
-        logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
-
-        String httpMethod = "POST";
-        String baseUrl = "https://api.twitter.com/oauth/access_token";
-        Map<String, String> bodyParams = new HashMap<>();
-        bodyParams.put("oauth_verifier", oauthVerifier);
-        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
-
-        Map<String, String> header = new HashMap<String, String>();
-        header.put("Authorization", authString);
-        Map<String, String> body = new HashMap<String, String>();
-        body.put("oauth_verifier", oauthVerifier);
-        String httpResult = HttpUtil.post(baseUrl, body, header, "UTF-8");
-        logger.info("WLL's log: accessToken: " + httpResult);
-
-        String[] accessTokenResults = httpResult.split("&");
-        if (accessTokenResults[0].substring(0, accessTokenResults[0].indexOf('=')).equals("oauth_token")){
-            String oauthToken = accessTokenResults[0].substring(accessTokenResults[0].indexOf('=') + 1);
-            String oauthTokenSecret = accessTokenResults[1].substring(accessTokenResults[1].indexOf('=') + 1);
-
-            Map<String, String> authResultMap = new HashMap<String, String>();
-            authResultMap.put("oauthToken", oauthToken);
-            authResultMap.put("oauthTokenSecret", oauthTokenSecret);
-
-            this.oauthToken = oauthToken;
-            this.oauthTokenSecret = oauthTokenSecret;
-
-            return authResultMap;
-        } else {
-            return null;
-        }
-    }
-
     public String authTwitter() {
         String httpMethod = "POST";
         String baseUrl = "https://api.twitter.com/oauth/request_token";
@@ -424,6 +395,40 @@ public class Oauth2ServiceImp {
         Map<String, String> oauthTokenMap = getOauthToken(authString);
         String result = getOauthVerifierToRedirect(oauthTokenMap.get("oauthToken"));
         return result;
+    }
+
+    public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
+        logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
+
+        String httpMethod = "POST";
+        String baseUrl = "https://api.twitter.com/oauth/access_token";
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("oauth_verifier", oauthVerifier);
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+
+        Map<String, String> header = new HashMap<String, String>();
+        header.put("Authorization", authString);
+        Map<String, String> body = new HashMap<String, String>();
+        body.put("oauth_verifier", oauthVerifier);
+        String httpResult = HttpUtil.post(baseUrl, body, header, "UTF-8");
+        logger.info("WLL's log: accessToken: " + httpResult);
+
+        String[] accessTokenResults = httpResult.split("&");
+        if (accessTokenResults[0].substring(0, accessTokenResults[0].indexOf('=')).equals("oauth_token")){
+            String oauthToken = accessTokenResults[0].substring(accessTokenResults[0].indexOf('=') + 1);
+            String oauthTokenSecret = accessTokenResults[1].substring(accessTokenResults[1].indexOf('=') + 1);
+
+            Map<String, String> authResultMap = new HashMap<String, String>();
+            authResultMap.put("oauthToken", oauthToken);
+            authResultMap.put("oauthTokenSecret", oauthTokenSecret);
+
+            this.oauthToken = oauthToken;
+            this.oauthTokenSecret = oauthTokenSecret;
+
+            return authResultMap;
+        } else {
+            return null;
+        }
     }
 
     public String getUserInfo() {

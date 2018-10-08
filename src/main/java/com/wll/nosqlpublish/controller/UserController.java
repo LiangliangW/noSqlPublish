@@ -1,12 +1,8 @@
 package com.wll.nosqlpublish.controller;
 
-import java.io.UnsupportedEncodingException;
-import java.security.SignatureException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +15,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
 import com.wll.nosqlpublish.service.imp.Oauth2ServiceImp;
-import com.wll.nosqlpublish.util.UrlEncodeUtil;
 
 @RestController
 @RequestMapping(value = "/")
@@ -41,12 +36,10 @@ public class UserController {
         return "OK";
     }
 
-    @GetMapping(value = "/oauth")
+    @GetMapping(value = "/loginFacebook")
     public ModelAndView loginWithOauth() {
         //这个重定向，会访问两次，初始就访问一次，手动输入不会
-        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?"
-            + "client_id=549957782114948"
-            + "&redirect_uri=https://localhost:8443/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
+        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?client_id=469354166884422&redirect_uri=https://localhost:8443/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
     }
 
     @GetMapping(value = "/code")
@@ -110,12 +103,13 @@ public class UserController {
     }
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
-    public String test() throws UnsupportedEncodingException {
-        return UrlEncodeUtil.encode("My first twitter by coding");
+    public String test(String message) {
+        String twitterRes = oauth2ServiceImp.tweetTest(message);
+        return twitterRes;
     }
 
-    @RequestMapping(value = "/authTwitter", method = RequestMethod.GET)
-    public String authTwitter() throws UnsupportedEncodingException, SignatureException {
+    @RequestMapping(value = "/loginTwitter", method = RequestMethod.GET)
+    public String authTwitter() {
         return oauth2ServiceImp.authTwitter();
     }
 
@@ -129,9 +123,9 @@ public class UserController {
 //    }
 
     @RequestMapping(value = "/getOauthVerifier", method = RequestMethod.GET)
-    public String getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
+    public Map getOauthVerifierFromRedirect(@RequestParam("oauth_token") String oauthToken, @RequestParam("oauth_verifier") String oauthVerifier) {
         Map accessToken = oauth2ServiceImp.getAccessTokenInTwitter(oauthVerifier);
-        return "";
+        return accessToken;
     }
 
     @RequestMapping(value = "/getUserInfo", method = RequestMethod.GET)
@@ -141,6 +135,6 @@ public class UserController {
 
     @RequestMapping(value = "/tweet", method = RequestMethod.GET)
     public String tweet() {
-        return oauth2ServiceImp.tweetTest("测试一起发" + System.currentTimeMillis());
+        return oauth2ServiceImp.tweetTest(oauth2ServiceImp.getOauthNonce());
     }
 }
