@@ -1,6 +1,8 @@
 package com.wll.nosqlpublish.controller;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.wll.nosqlpublish.service.imp.Oauth2ServiceImp;
 
 @RestController
@@ -104,8 +108,10 @@ public class UserController {
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     public String test(String message) {
-        String twitterRes = oauth2ServiceImp.tweetTest(message);
-        return twitterRes;
+        String json = "{\"media_id\":1049489858899501056,\"media_id_string\":\"1049489858899501056\",\"size\":63732,\"expires_after_secs\":86400,\"image\":{\"image_type\":\"image\\/jpeg\",\"w\":800,\"h\":600}}";
+        JSONObject imageResult = JSON.parseObject(json);
+        String mediaId = imageResult.getString("media_id_string");
+        return mediaId;
     }
 
     @RequestMapping(value = "/loginTwitter", method = RequestMethod.GET)
@@ -137,4 +143,23 @@ public class UserController {
     public String tweet() {
         return oauth2ServiceImp.tweetTest(oauth2ServiceImp.getOauthNonce());
     }
+
+    @RequestMapping(value = "/tweetUploadSingleImage", method = RequestMethod.GET)
+    public String tweetUploadSingleImage() {
+        Map<String, String> files = new HashMap<>();
+        files.put("media", "./src/main/resources/firstImage.jpg");
+        String json = oauth2ServiceImp.tweetUploadSingleImage(files);
+        return json;
+    }
+
+    @RequestMapping(value = "/tweetSingleImage", method = RequestMethod.GET)
+    public String tweetSingleImage() {
+        Map<String, String> files = new HashMap<>();
+        files.put("media", "./src/main/resources/firstImage.jpg");
+        String mediaId = oauth2ServiceImp.tweetUploadSingleImage(files);
+        String result = oauth2ServiceImp.tweetTest("firstImage", mediaId);
+        return result;
+    }
+
+
 }

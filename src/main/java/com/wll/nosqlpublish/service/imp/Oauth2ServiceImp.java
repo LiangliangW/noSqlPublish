@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.wll.nosqlpublish.util.HmacSha1Util;
@@ -445,19 +447,44 @@ public class Oauth2ServiceImp {
     }
 
     public String tweetTest(String text) {
+        return tweetTest(text, null);
+    }
+
+    public String tweetTest(String text, String mediaIds) {
         String httpMethod = "POST";
         String baseUrl = "https://api.twitter.com/1.1/statuses/update.json";
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("status", text);
+        if (!StringUtils.isBlank(mediaIds)) {
+            bodyParams.put("media_ids", mediaIds);
+        }
         String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
 
         Map<String, String> header = new HashMap<>();
         header.put("Authorization", authString);
-        Map<String, String> body = new HashMap<>();
-        body.put("status", UrlEncodeUtil.encode(text));
-        String httpResult = HttpUtil.post(baseUrl, body, header, "utf-8");
+        //由于 HTTP 请求 body 中的 "status" 参数必须是经过URL编码的，但是生成signature时不能是提前编码过的，所以覆盖此参数
+        bodyParams.put("status", UrlEncodeUtil.encode(text));
+        if (!StringUtils.isBlank(mediaIds)) {
+            bodyParams.put("media_ids", mediaIds);
+        }
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header, "utf-8");
 
         logger.info("WLL's log: TweetResponse: " + httpResult);
         return httpResult;
+    }
+
+    public String tweetUploadSingleImage(Map<String, String> files) {
+         String httpMethod = "POST";
+         String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+         String authString = getAuthString(httpMethod, baseUrl, null, null);
+
+         Map<String, String> header = new HashMap<>();
+         header.put("Authorization", authString);
+         String httpResult = HttpUtil.post(baseUrl, null, header, files, "utf-8");
+         logger.info("WLL's log: TwitterSingleImage: " + httpResult);
+
+         JSONObject imageResult = JSON.parseObject(httpResult);
+         String mediaId = imageResult.getString("media_id_string");
+         return mediaId;
     }
 }
