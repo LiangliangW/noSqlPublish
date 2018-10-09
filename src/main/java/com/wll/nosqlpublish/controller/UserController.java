@@ -146,20 +146,13 @@ public class UserController {
 
     @RequestMapping(value = "/tweetUploadSingleImage", method = RequestMethod.GET)
     public String tweetUploadSingleImage() {
-        Map<String, String> files = new HashMap<>();
-        files.put("media", "./src/main/resources/firstImage.jpg");
-        String json = oauth2ServiceImp.tweetUploadSingleImage(files);
-        return json;
+        String mediaId = oauth2ServiceImp.tweetUploadSingleImage("./src/main/resources/firstImage.jpg");
+        return mediaId;
     }
 
-    @RequestMapping(value = "/tweetSingleImage", method = RequestMethod.GET)
-    public String tweetSingleImage() {
-        Map<String, String> files = new HashMap<>();
-        files.put("media", "./src/main/resources/firstImage.jpg");
-        String mediaId = oauth2ServiceImp.tweetUploadSingleImage(files);
-        String result = oauth2ServiceImp.tweetTest("firstImage", mediaId);
+    @RequestMapping(value = "/tweetChunkedUploadInit", method = RequestMethod.GET)
+    public String tweetChunkedUploadInit() {
+        String result = oauth2ServiceImp.tweetChunkedUploadInit("./src/main/resources/firstImage.jpg", "image/jpeg");
         return result;
     }
-
-
 }

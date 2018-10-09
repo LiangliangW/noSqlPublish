@@ -104,6 +104,10 @@ public class HttpUtil {
         return post(url, params, null, charset);
     }
 
+    public static String post(String url, Map<String, String> params, Map<String, String> header) {
+        return post(url, params, header, null, DEFAULT_CHARSET);
+    }
+
     public static String post(String url, Map<String, String> params, Map<String, String> header, String charset) {
         return post(url, params, header, null, charset);
     }

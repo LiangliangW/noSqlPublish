@@ -1,5 +1,6 @@
 package com.wll.nosqlpublish.service.imp;
 
+import java.io.File;
 import java.security.SignatureException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -327,7 +328,7 @@ public class Oauth2ServiceImp {
         String requestTokenUrl = "https://api.twitter.com/oauth/request_token";
         Map<String, String> header = new HashMap<String, String>();
         header.put("Authorization", authString);
-        String httpResult = HttpUtil.post(requestTokenUrl, null, header, "UTF-8");
+        String httpResult = HttpUtil.post(requestTokenUrl, null, header);
         logger.info("WLL's log: OauthToken: " + httpResult);
 
         String[] authResults = httpResult.split("&");
@@ -412,7 +413,7 @@ public class Oauth2ServiceImp {
         header.put("Authorization", authString);
         Map<String, String> body = new HashMap<String, String>();
         body.put("oauth_verifier", oauthVerifier);
-        String httpResult = HttpUtil.post(baseUrl, body, header, "UTF-8");
+        String httpResult = HttpUtil.post(baseUrl, body, header);
         logger.info("WLL's log: accessToken: " + httpResult);
 
         String[] accessTokenResults = httpResult.split("&");
@@ -467,24 +468,53 @@ public class Oauth2ServiceImp {
         if (!StringUtils.isBlank(mediaIds)) {
             bodyParams.put("media_ids", mediaIds);
         }
-        String httpResult = HttpUtil.post(baseUrl, bodyParams, header, "utf-8");
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
 
         logger.info("WLL's log: TweetResponse: " + httpResult);
         return httpResult;
     }
 
-    public String tweetUploadSingleImage(Map<String, String> files) {
+    public String tweetUploadSingleImage(String filePath) {
          String httpMethod = "POST";
          String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+         //注意，media相关的，signature 只包含 oauth_* 的参数
          String authString = getAuthString(httpMethod, baseUrl, null, null);
 
          Map<String, String> header = new HashMap<>();
          header.put("Authorization", authString);
+
+         Map<String, String> files = new HashMap<>();
+         files.put("media", filePath);
+
          String httpResult = HttpUtil.post(baseUrl, null, header, files, "utf-8");
          logger.info("WLL's log: TwitterSingleImage: " + httpResult);
 
          JSONObject imageResult = JSON.parseObject(httpResult);
          String mediaId = imageResult.getString("media_id_string");
          return mediaId;
+    }
+
+
+    public String tweetChunkedUploadInit(String filePath, String mediaType) {
+        Map<String, String> bodyParams = new HashMap<>();
+        Long fileSize = new File(filePath).length();
+        bodyParams.put("command", "INIT");
+        bodyParams.put("total_bytes", String.valueOf(fileSize));
+        bodyParams.put("media_type", mediaType);
+
+        String httpMethod = "POST";
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json?command=INIT&total_bytes=" +
+                String.valueOf(fileSize) + "&media_type=image/jpeg";
+        logger.info("WLL's log: TwitterMediaInitUrl: " + baseUrl);
+
+        String baseUrlAuth = "https://upload.twitter.com/1.1/media/upload.json";
+        String authString = getAuthString(httpMethod, baseUrlAuth, null, null);
+
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", authString);
+
+        String httpResult = HttpUtil.post(baseUrlAuth, bodyParams, header);
+        logger.info("WLL's log: TweetChunkedUploadInit: " + httpResult);
+        return httpResult;
     }
 }
