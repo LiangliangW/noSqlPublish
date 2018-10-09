@@ -558,24 +558,21 @@ public class Oauth2ServiceImp {
 
 
     public String tweetChunkedUploadInit(String filePath, String mediaType) {
+        String httpMethod = "POST";
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
         Map<String, String> bodyParams = new HashMap<>();
         Long fileSize = new File(filePath).length();
         bodyParams.put("command", "INIT");
-        bodyParams.put("total_bytes", String.valueOf(fileSize));
         bodyParams.put("media_type", mediaType);
-
-        String httpMethod = "POST";
-        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json?command=INIT&total_bytes=" +
-                String.valueOf(fileSize) + "&media_type=image/jpeg";
-        logger.info("WLL's log: TwitterMediaInitUrl: " + baseUrl);
-
-        String baseUrlAuth = "https://upload.twitter.com/1.1/media/upload.json";
-        String authString = getAuthString(httpMethod, baseUrlAuth, null, null);
+        bodyParams.put("total_bytes", String.valueOf(fileSize));
 
         Map<String, String> header = new HashMap<>();
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
         header.put("Authorization", authString);
 
-        String httpResult = HttpUtil.post(baseUrlAuth, bodyParams, header);
+        bodyParams.put("media_type", UrlEncodeUtil.encode(mediaType));
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
         logger.info("WLL's log: TweetChunkedUploadInit: " + httpResult);
         return httpResult;
     }

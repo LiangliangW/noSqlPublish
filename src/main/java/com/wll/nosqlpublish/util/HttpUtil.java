@@ -24,7 +24,7 @@ import com.alibaba.fastjson.JSONObject;
 
 public class HttpUtil {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(HttpUtil.class);
+    private static Logger logger = LoggerFactory.getLogger(HttpUtil.class);
 
     private static int CONNECT_TIME_OUT = 40000;
 
@@ -81,12 +81,12 @@ public class HttpUtil {
                 }
                 is.close();
             } else {
-                LOGGER.warn("{} http response code is {}", url, responseCode);
+                logger.warn("{} http response code is {}", url, responseCode);
             }
             connection.disconnect();
             result = out.toString();
         } catch (IOException e) {
-            LOGGER.error("{}", e.getMessage(), e);
+            logger.error("{}", e.getMessage(), e);
         }
         return result;
     }
@@ -242,6 +242,7 @@ public class HttpUtil {
                         stringBuilder.append("&");
                     }
                     stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                    logger.info("WLL's log: HttpParams(application/x-www-form-urlencoded): url: " + url + "   params: " + stringBuilder.toString());
                     out.write(stringBuilder.toString().getBytes(charset));
                 }
             } else {
@@ -255,6 +256,7 @@ public class HttpUtil {
                         stringBuilder.append("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"\r\n\r\n");
                         stringBuilder.append(entry.getValue() + "\r\n");
                     }
+                    logger.info("WLL's log: HttpParams(multipart/form-data): url: " + url + "   params: " + stringBuilder.toString());
                     out.write(stringBuilder.toString().getBytes(charset));
                 }
 
@@ -305,7 +307,7 @@ public class HttpUtil {
             connection.disconnect();
             result = bout.toString();
         } catch (IOException e) {
-            LOGGER.error("{}", e.getMessage(), e);
+            logger.error("{}", e.getMessage(), e);
         }
         return result;
     }
