@@ -13,11 +13,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.wll.nosqlpublish.constant.HttpMethodEnum;
 import com.wll.nosqlpublish.util.HmacSha1Util;
 import com.wll.nosqlpublish.util.HttpUtil;
 import com.wll.nosqlpublish.util.UrlEncodeUtil;
@@ -513,5 +515,58 @@ public class Oauth2ServiceImp {
         String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
         logger.info("WLL's log: TweetChunkedUploadInit: " + httpResult);
         return httpResult;
+    }
+
+    public String tweetChunkedUploadAppend(String filePath, String mediaId, String segmentIndex) {
+        String httpMethod = HttpMethodEnum.POST.getMethod();
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("command", "APPEND");
+        bodyParams.put("media_id", mediaId);
+        bodyParams.put("segment_index", segmentIndex);
+
+        Map<String, String> header = new HashMap<>();
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+        header.put("Authorization", authString);
+
+        return "";
+    }
+
+    /**
+     * Twitter media 完成上传
+     * @param mediaId
+     * @return -1：错误； 0：OK； others：checkAfterSecs
+     */
+    public Integer tweetChunkedUploadFinalize(String mediaId) {
+        String httpMethod = HttpMethodEnum.POST.getMethod();
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("command", "FINALIZE");
+        bodyParams.put("media_id", mediaId);
+
+        Map<String, String> header = new HashMap<>();
+        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+        header.put("Authorization", authString);
+
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
+        logger.info("WLL's log: tweetChunkedUploadFinalize: " + httpResult);
+
+        JSONObject finalizeResult = JSON.parseObject(httpResult);
+        JSONObject processingInfo = finalizeResult.getJSONObject("processing_info");
+        if (processingInfo != null) {
+            String state = processingInfo.getString("state");
+            if (state.equals("failed")) {
+                String errorMsg = processingInfo.getJSONObject("error").getString("message");
+                logger.error("WLL's log: ERROR : tweetChunkedUploadFinalize: " + httpResult);
+                return -1;
+            } else {
+                Integer checkAfterSecs = processingInfo.getInteger("check_after_secs");
+                return checkAfterSecs;
+            }
+        } else {
+            return 0;
+        }
     }
 }
