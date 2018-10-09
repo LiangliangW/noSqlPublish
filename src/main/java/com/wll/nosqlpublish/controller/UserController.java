@@ -155,4 +155,23 @@ public class UserController {
         String result = oauth2ServiceImp.tweetChunkedUploadInit("./src/main/resources/firstImage.jpg", "image/jpeg");
         return result;
     }
+
+    @RequestMapping(value = "/facebookChunkedUpload", method = RequestMethod.GET)
+    public String facebookChunkedUpload() {
+        String filePath = "D:/springboot/2.mp4";
+        String pageId = "239040333455132";
+//        oauth2ServiceImp.facebookAccessToken = "EAAEAfkSI6DkBAE24f6TT4bekbuAaUKVgD5Hp2YpsEWcea4CnH5DdbZCYWC2xfxIv6wohoFnrkbxZAtUfTZAEE1ZBHMtZCCQ7cogczJ8TvhSEQEwP7BVrZAW1Nnu4EZCUVxHe37FintoZCXEZBgX73hHyyJxgxwPpyQsSTlL27989eQeVn47VihSqLDmOh6hNtL0DYEYnWFIKpXHK0EX7iUCDMJtgMeGatZCbbC0Hw4WUVEBwZDZD";
+        String pageAccessToken = "EAAEAfkSI6DkBADwCGJqld3l3HRoyZCmh9BnxQMdjKRaF4nfZAaG3zO3cp0ZBH9VwOj4l3ZBV9e3wDEaOtT6YeCGwgLHwbDrzM4dr3HtHZASXQEkTZCsJmUJIha0NxvJxs97lZBtSAA7lL8EfZCMJebwhB0CTE9yjZBIVIiV2k9ZC7AoNJoh4KEnxzvnL22jwIGh3IZD";
+        String result1 = oauth2ServiceImp.facebookChunkedUploadVideoInit(pageId, filePath, pageAccessToken);
+        logger.info("hinson'log: rseult1: " + result1);
+//        JSONObject jsonObject = JSONObject.parseObject(result1);
+//        JSONObject data = jsonObject.getJSONObject("data");
+//        String uploadSessionId = data.getString("upload_session_id");
+//        long startOffset = Long.parseLong(data.getString("start_offset"));
+//        long endOffset = Long.parseLong(data.getString("end_offset"));
+//        String result2 = oauth2ServiceImp.facebookChunkedUploading(pageId, filePath, pageAccessToken,
+//            uploadSessionId, startOffset, endOffset);
+//        logger.info("hinson'log: result2: " + result2);
+        return result1;
+    }
 }
