@@ -1,5 +1,7 @@
 package com.wll.nosqlpublish.util;
 
+import com.alibaba.fastjson.JSON;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -10,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.Buffer;
 import java.util.Date;
 import java.util.Map;
 
@@ -117,6 +120,96 @@ public class HttpUtil {
         return post(url, params, header, files, charset, CONNECT_TIME_OUT, READ_TIME_OUT);
     }
 
+    public static String postChunkInputStream(String url, Map<String, String> params, Map<String, String> header,
+        BufferedInputStream bufferedInputStream, Long startOffset, Long endOffset,
+        String multipartFileParam, String multipartFileName,
+        String charset, int connectTimeout, int readTimeout) {
+
+        try {
+            /**
+             * 文件输入跳到指定的开始位置
+             */
+            bufferedInputStream.skip(startOffset);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String result = "";
+        JSONObject resJson = new JSONObject();
+        OutputStream out = null;
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
+            connection.setConnectTimeout(connectTimeout);
+            connection.setReadTimeout(readTimeout);
+
+            if (header != null) {
+                for (Map.Entry<String, String> entry : header.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+
+            String boundary = "=====" + String.valueOf(new Date().getTime()) + "=====";
+            connection.setRequestProperty("content-type", "multipart/form-data; boundary=" + boundary);
+            out = new DataOutputStream(connection.getOutputStream());
+            if (params != null && params.size() > 0) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (Map.Entry<String, String> entry : params.entrySet()) {
+                    stringBuilder.append("--" + boundary + "\r\n");
+                    stringBuilder.append("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"\r\n\r\n");
+                    stringBuilder.append(entry.getValue() + "\r\n");
+                }
+                out.write(stringBuilder.toString().getBytes(charset));
+            }
+
+            out.write(("--" + boundary + "\r\n").getBytes(charset));
+            out.write(("Content-Disposition: form-data; name=\"" + multipartFileParam + "\"; filename=\"" + multipartFileName + "\"\r\n").getBytes(charset));
+            out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes(charset));
+
+            long hasReadCount = startOffset;
+            int readCount;
+            while ((readCount = bufferedInputStream.read(BUFFER)) > 0) {
+                if (endOffset - hasReadCount >= BUFFER.length){
+                    //剩余要读取的字节数要大于等于BUFFER的长度, write整个BUFFER
+                    out.write(BUFFER, 0, readCount);
+                    hasReadCount += readCount;
+                } else {
+                    out.write(BUFFER, 0, (int)(endOffset - hasReadCount));
+                    break;
+                }
+            }
+            out.write("\r\n".getBytes(charset));
+
+            out.write(("--" + boundary + "--\r\n").getBytes(charset));
+
+            out.flush();
+            out.close();
+
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
+                InputStream is = connection.getInputStream();
+                while ((readCount = is.read(BUFFER)) > 0) {
+                    bout.write(BUFFER, 0, readCount);
+                }
+                is.close();
+            }else {
+                InputStream is = connection.getErrorStream();
+                while ((readCount = is.read(BUFFER)) > 0) {
+                    bout.write(BUFFER, 0, readCount);
+                }
+                is.close();
+            }
+            connection.disconnect();
+            result = bout.toString();
+            resJson.put("code", connection.getResponseCode());
+            resJson.put("data", result);
+        } catch (IOException e) {
+            LOGGER.error("{}", e.getMessage(), e);
+        }
+        return resJson.toString();
+    }
 
     public static String post(String url, Map<String, String> params, Map<String, String> header, Map<String, String> files,
                               String charset, int connectTimeout, int readTimeout) {

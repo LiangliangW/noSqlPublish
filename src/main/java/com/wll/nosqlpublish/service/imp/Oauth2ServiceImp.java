@@ -1,6 +1,11 @@
 package com.wll.nosqlpublish.service.imp;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.SignatureException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -65,7 +70,7 @@ public class Oauth2ServiceImp {
      * @param pageId
      * @return
      */
-    private String getPageAccessToken(String pageId) {
+    public String getPageAccessToken(String pageId) {
 
         String getPageAccessToken = "https://graph.facebook.com/v3.1/me/accounts";
         JSONObject json = HttpUtil.getJsonObject(getPageAccessToken + "?access_token="+ this.facebookAccessToken);
@@ -186,6 +191,63 @@ public class Oauth2ServiceImp {
         pageParams.put("description", "This video is uploaded from foucs server");
         return publishGroup(pageParams, "/videos");
     }
+
+    /**
+     * 分片上传facebook视频
+     * @param pageOrGroupId
+     * @param filePath
+     * @param access_token
+     * @return
+     */
+    public String facebookChunkedUploadVideoInit(String pageOrGroupId, String filePath, String access_token) {
+        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        Long fileSize = new File(filePath).length();
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("access_token", access_token);
+        bodyParams.put("upload_phase", "start");
+        bodyParams.put("file_size", fileSize.toString());
+        return HttpUtil.post(postUrl, bodyParams);
+    }
+
+    public String facebookChunkedUploading(String pageOrGroupId, String filePath, String access_token,
+        String uploadSessionId, long startOffset, long endOffset) {
+        BufferedInputStream bufferedInputStream = null;
+        FileInputStream fileInputStream = null;
+        String uploadRes = null;
+        String chunkName = null;
+        try {
+            fileInputStream = new FileInputStream(filePath);
+            bufferedInputStream = new BufferedInputStream(fileInputStream);
+            chunkName = "chunk1.mp4";
+            uploadRes = facebookChunkedUploadChunk(pageOrGroupId, access_token, uploadSessionId,
+                chunkName, bufferedInputStream, startOffset, endOffset);
+            return uploadRes;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                bufferedInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return "失败";
+    }
+    public String facebookChunkedUploadChunk(String pageOrGroupId, String access_token,
+        String uploadSessionId, String ChunkName,
+        BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
+        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("access_token", access_token);
+        bodyParams.put("upload_phase", "transfer");
+        bodyParams.put("start_offset", String.valueOf(startOffset));
+        bodyParams.put("upload_session_id", uploadSessionId);
+        return HttpUtil.postChunkInputStream(postUrl, bodyParams, null, bufferedInputStream,
+            startOffset, endOffset, "video_file_chunk", ChunkName,
+            "UTF-8", 40000, 40000);
+    }
+
 
 
 
