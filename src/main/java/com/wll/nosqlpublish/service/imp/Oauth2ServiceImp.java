@@ -41,6 +41,12 @@ public class Oauth2ServiceImp {
     @Value("${access_token.facebook}")
     public String facebookAccessToken;
 
+    @Value("${facebook.appId}")
+    public String facebookAppId;
+
+    @Value("${facebook.appSecret}")
+    public String facebookAppSecret;
+
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
@@ -50,8 +56,14 @@ public class Oauth2ServiceImp {
     }
 
     public String getAccessToken(String code){
-        String appId = "469354166884422";
-        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
+
+        //Hinson's facebook app id and secret
+//        String appId = "469354166884422";
+//        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
+
+
+        String appId = this.facebookAppId;
+        String clientSecret = this.facebookAppSecret;
         String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
@@ -152,6 +164,7 @@ public class Oauth2ServiceImp {
      */
     private String publishGroup(Map<String, String> groupParams, String targetUrl){
         String groupId = "109289593293363";
+//        String groupId = "473186779854545";
 
         String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + targetUrl;
         groupParams.put("access_token", this.facebookAccessToken);
@@ -202,7 +215,7 @@ public class Oauth2ServiceImp {
      * @return
      */
     public String facebookChunkedUploadVideoInit(String pageOrGroupId, String filePath, String access_token) {
-        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        String postUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
         Long fileSize = new File(filePath).length();
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("access_token", access_token);
@@ -239,7 +252,7 @@ public class Oauth2ServiceImp {
     public String facebookChunkedUploadChunk(String pageOrGroupId, String access_token,
         String uploadSessionId, String ChunkName,
         BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
-        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        String postUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("access_token", access_token);
         bodyParams.put("upload_phase", "transfer");
@@ -732,4 +745,28 @@ public class Oauth2ServiceImp {
 //    public String tweetVideo(String filePath, String mediaType) {
 //
 //    }
+
+    public String tweetChunkedUploadChunks(String segment_index, String mediaId,
+        BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
+
+        String httpMethod = "POST";
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+        //注意，media相关的，signature 只包含 oauth_* 的参数
+        String authString = getAuthString(httpMethod, baseUrl, null, null);
+
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", authString);
+
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("command", "APPEND");
+        bodyParams.put("media_id", mediaId);
+        bodyParams.put("segment_index", segment_index);
+
+        String multipartFileParam = "media";
+        String multipartFileName = "media" + segment_index;
+
+        return HttpUtil.postChunkInputStream(baseUrl, bodyParams, header, bufferedInputStream,
+            startOffset, endOffset, "video_file_chunk", multipartFileParam,
+            "UTF-8", 40000, 40000);
+    }
 }

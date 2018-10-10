@@ -40,10 +40,31 @@ public class UserController {
         return "OK";
     }
 
+    @RequestMapping(value = "/publishAllPhoto", method = RequestMethod.GET)
+    public String publishAllPhoto() {
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = dateformat.format(System.currentTimeMillis());
+        //上传图片至facebook 主页
+        String url = "http://oysf0b7t0.bkt.clouddn.com/focus.jpeg";//焦点图片
+        String pageRes = oauth2ServiceImp.publishPageWithPhoto(url);
+        logger.info("facebook's page photo: " + pageRes);
+        //上传图片至facebook 小组
+        String groupRes = oauth2ServiceImp.publishGroupWithPhoto(url);
+        logger.info("facebook's group photo: " + groupRes);
+        //上传图片至twitter
+        String mediaId = oauth2ServiceImp.tweetUploadSingleImage("./src/main/resources/firstImage.jpg");
+        String twitterRes = oauth2ServiceImp.tweetTest("焦点图片: " + dateStr, mediaId);
+        logger.info("twitter's photo: " + twitterRes);
+        return "OK";
+    }
+
     @GetMapping(value = "/loginFacebook")
     public ModelAndView loginWithOauth() {
         //这个重定向，会访问两次，初始就访问一次，手动输入不会
-        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?client_id=469354166884422&redirect_uri=https://localhost:8443/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
+        String appId = oauth2ServiceImp.facebookAppId;
+        return new ModelAndView(new RedirectView("https://www.facebook.com/dialog/oauth?client_id="
+            + appId
+            + "&redirect_uri=https://localhost:8443/code&response_type=code&state=nfeXN4&scope=publish_pages,manage_pages,publish_to_groups"));
     }
 
     @GetMapping(value = "/code")
@@ -80,22 +101,22 @@ public class UserController {
     @RequestMapping(value = "/publishGroup1", method = RequestMethod.GET)
     public String publishGroup1() {
         String message = "publish FaceBook page";
-        String pageRes = oauth2ServiceImp.publishGroupWithCharacters(message);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithCharacters(message);
+        return groupRes;
     }
     //在小组中发布图片
     @RequestMapping(value = "/publishGroup2", method = RequestMethod.GET)
     public String publishGroup2() {
         String url = "http://oyf9q4qzp.bkt.clouddn.com/1514099374.jpeg";
-        String pageRes = oauth2ServiceImp.publishGroupWithPhoto(url);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithPhoto(url);
+        return groupRes;
     }
     //在小组中发布视频
     @RequestMapping(value = "/publishGroup3", method = RequestMethod.GET)
     public String publishGroup3() {
         String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
-        String pageRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
+        return groupRes;
     }
 
 
@@ -173,22 +194,33 @@ public class UserController {
         return oauth2ServiceImp.tweetTest("一键多发视频demo，发送时间: " + dateStr, mediaId);
     }
 
+//    @RequestMapping(value = "/tweetChunkedUpload", method = RequestMethod.GET)
+//    public String tweetChunkedUpload() {
+//        String filePath = "./src/main/resources/douyin1.jpg";
+//        String mediaType = "video/mp4";
+//        String initRes = oauth2ServiceImp.tweetChunkedUploadInit(filePath, mediaType);
+//        JSONObject initResJson = JSONObject.parseObject(initRes);
+//        String mediaId = initResJson.getString("media_id");
+//
+//    }
+
     @RequestMapping(value = "/facebookChunkedUpload", method = RequestMethod.GET)
     public String facebookChunkedUpload() {
         String filePath = "D:/springboot/2.mp4";
-        String pageId = "239040333455132";
+        String groupId = "1972058782882587";
 //        oauth2ServiceImp.facebookAccessToken = "EAAEAfkSI6DkBAE24f6TT4bekbuAaUKVgD5Hp2YpsEWcea4CnH5DdbZCYWC2xfxIv6wohoFnrkbxZAtUfTZAEE1ZBHMtZCCQ7cogczJ8TvhSEQEwP7BVrZAW1Nnu4EZCUVxHe37FintoZCXEZBgX73hHyyJxgxwPpyQsSTlL27989eQeVn47VihSqLDmOh6hNtL0DYEYnWFIKpXHK0EX7iUCDMJtgMeGatZCbbC0Hw4WUVEBwZDZD";
-        String pageAccessToken = "EAAEAfkSI6DkBADwCGJqld3l3HRoyZCmh9BnxQMdjKRaF4nfZAaG3zO3cp0ZBH9VwOj4l3ZBV9e3wDEaOtT6YeCGwgLHwbDrzM4dr3HtHZASXQEkTZCsJmUJIha0NxvJxs97lZBtSAA7lL8EfZCMJebwhB0CTE9yjZBIVIiV2k9ZC7AoNJoh4KEnxzvnL22jwIGh3IZD";
-        String result1 = oauth2ServiceImp.facebookChunkedUploadVideoInit(pageId, filePath, pageAccessToken);
+        String userAccessToken = "EAAeuoevhPZC0BAHmvcpySbfy9cPsABpJSbf230wrIa5dtZBNIZCMKhuzsNDkbpq06cvBoEMn4eN9aWxYVfrJmEcd74bsYK5OSnsNKE4YYnAznhjsUFYkhI73ZA6HCDCP1v03p5hMj9UNd11lOxD7DMOzWc0eqYl18pzklUb1r3G6IQkkvDc2GLyCZCpf24ymK2XK0U9q1uCQjMNdGn4FEy6sZAByPg70xc96yzkfA1gUWQfXBoE2IfPCpAGZAk77LUZD";
+
+        String result1 = oauth2ServiceImp.facebookChunkedUploadVideoInit(groupId, filePath, userAccessToken);
         logger.info("hinson'log: rseult1: " + result1);
-//        JSONObject jsonObject = JSONObject.parseObject(result1);
-//        JSONObject data = jsonObject.getJSONObject("data");
-//        String uploadSessionId = data.getString("upload_session_id");
-//        long startOffset = Long.parseLong(data.getString("start_offset"));
-//        long endOffset = Long.parseLong(data.getString("end_offset"));
-//        String result2 = oauth2ServiceImp.facebookChunkedUploading(pageId, filePath, pageAccessToken,
-//            uploadSessionId, startOffset, endOffset);
-//        logger.info("hinson'log: result2: " + result2);
+        JSONObject data = JSONObject.parseObject(result1);
+
+        String uploadSessionId = data.getString("upload_session_id");
+        long startOffset = Long.parseLong(data.getString("start_offset"));
+        long endOffset = Long.parseLong(data.getString("end_offset"));
+        String result2 = oauth2ServiceImp.facebookChunkedUploading(groupId, filePath, userAccessToken,
+            uploadSessionId, startOffset, endOffset);
+        logger.info("hinson'log: result2: " + result2);
         return result1;
     }
 }
