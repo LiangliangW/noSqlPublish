@@ -223,4 +223,13 @@ public class UserController {
         logger.info("hinson'log: result2: " + result2);
         return result1;
     }
+
+    @RequestMapping(value = "/tweetVideoOneClick", method = RequestMethod.GET)
+    public String tweetVideoOneClick() {
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String text = "一键多发视频demo，发送时间: " + dateformat.format(System.currentTimeMillis());
+        String filePath = "./src/main/resources/test2.mp4";
+        String mediaType = "video/mp4";
+        return oauth2ServiceImp.tweetVideoTmp(text, filePath, mediaType);
+    }
 }
