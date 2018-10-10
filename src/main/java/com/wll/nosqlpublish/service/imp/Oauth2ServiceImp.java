@@ -151,7 +151,7 @@ public class Oauth2ServiceImp {
      * @return
      */
     private String publishGroup(Map<String, String> groupParams, String targetUrl){
-        String groupId = "473186779854545";
+        String groupId = "109289593293363";
 
         String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + targetUrl;
         groupParams.put("access_token", this.facebookAccessToken);
@@ -321,6 +321,15 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature
+     * @param httpMethod
+     * @param baseUrl
+     * @param params
+     * @param consumerSecret
+     * @param oauthTokenSecret
+     * @return
+     */
     public String getSignature(String httpMethod, String baseUrl, Map params, String consumerSecret, String oauthTokenSecret) {
         String signature = null;
         try {
@@ -352,6 +361,14 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/basics/authentication/guides/authorizing-a-request
+     * @param httpMethod
+     * @param baseUrl
+     * @param bodyParams
+     * @param headerParams
+     * @return
+     */
     public String getAuthString(String httpMethod, String baseUrl, Map<String, String> bodyParams, Map<String, String> headerParams) {
         String oauthConsumerKey = "fsbFHibUYg7eOWEwCwCFTFpM9";
         String oauthSignatureMethod = "HMAC-SHA1";
@@ -388,6 +405,11 @@ public class Oauth2ServiceImp {
         return authString;
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/basics/authentication/api-reference/request_token
+     * @param authString
+     * @return
+     */
     public Map<String, String> getOauthToken(String authString) {
         String requestTokenUrl = "https://api.twitter.com/oauth/request_token";
         Map<String, String> header = new HashMap<String, String>();
@@ -464,6 +486,11 @@ public class Oauth2ServiceImp {
         return result;
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/basics/authentication/api-reference/access_token
+     * @param oauthVerifier
+     * @return
+     */
     public Map<String, String> getAccessTokenInTwitter(String oauthVerifier) {
         logger.info("WLL's log: oauthVerifier: " + oauthVerifier);
 
@@ -515,6 +542,12 @@ public class Oauth2ServiceImp {
         return tweetTest(text, null);
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/post-statuses-update#post-statuses-update
+     * @param text
+     * @param mediaIds
+     * @return
+     */
     public String tweetTest(String text, String mediaIds) {
         String httpMethod = "POST";
         String baseUrl = "https://api.twitter.com/1.1/statuses/update.json";
@@ -538,6 +571,11 @@ public class Oauth2ServiceImp {
         return httpResult;
     }
 
+    /**
+     * https://developer.twitter.com/en/docs/media/upload-media/api-reference/post-media-upload
+     * @param filePath
+     * @return
+     */
     public String tweetUploadSingleImage(String filePath) {
          String httpMethod = "POST";
          String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
@@ -558,7 +596,12 @@ public class Oauth2ServiceImp {
          return mediaId;
     }
 
-
+    /**
+     * https://developer.twitter.com/en/docs/media/upload-media/api-reference/post-media-upload-init
+     * @param filePath
+     * @param mediaType
+     * @return
+     */
     public String tweetChunkedUploadInit(String filePath, String mediaType) {
         String httpMethod = "POST";
         String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
@@ -579,29 +622,43 @@ public class Oauth2ServiceImp {
         return httpResult;
     }
 
-    public String tweetChunkedUploadAppend(String filePath, String mediaId, String segmentIndex) {
+    /**
+     * https://developer.twitter.com/en/docs/media/upload-media/api-reference/post-media-upload-append
+     * @param filePath
+     * @param mediaId
+     * @param segmentIndex
+     * @return
+     */
+    public String tweetChunkedUploadAppend(String filePath, String mediaId, Integer segmentIndex) {
         String httpMethod = HttpMethodEnum.POST.getMethod();
         String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+        Map<String, String> files = new HashMap<>();
+        files.put("media", filePath);
 
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("command", "APPEND");
         bodyParams.put("media_id", mediaId);
-        bodyParams.put("segment_index", segmentIndex);
+        bodyParams.put("segment_index", String.valueOf(segmentIndex));
 
         Map<String, String> header = new HashMap<>();
-        String authString = getAuthString(httpMethod, baseUrl, bodyParams, null);
+        String authString = getAuthString(httpMethod, baseUrl, null, null);
         header.put("Authorization", authString);
 
-        return "";
+        String httpResult = HttpUtil.post(baseUrl, bodyParams, header, files, "utf-8");
+        logger.info("WLL's log: TwitterChunkedUploadAppend: " + httpResult);
+
+        return httpResult;
     }
 
     /**
+     * https://developer.twitter.com/en/docs/media/upload-media/api-reference/post-media-upload-finalize
      * Twitter media 完成上传
      * @param mediaId
      * @return -1：错误； 0：OK； others：checkAfterSecs
      */
     public Integer tweetChunkedUploadFinalize(String mediaId) {
-        String httpMethod = HttpMethodEnum.POST.getMethod();
+        String httpMethod = "POST";
         String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
 
         Map<String, String> bodyParams = new HashMap<>();
@@ -631,4 +688,48 @@ public class Oauth2ServiceImp {
             return 0;
         }
     }
+
+    /**
+     * https://developer.twitter.com/en/docs/media/upload-media/api-reference/get-media-upload-status
+     * Twitter media 检测上传状态
+     * @param mediaId
+     * @return -1：错误； 0：OK； others：checkAfterSecs
+     */
+    public Integer tweetChunkedUploadStatus(String mediaId) {
+        String httpMethod = HttpMethodEnum.GET.getMethod();
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json?command=STATUS&media_id=" + mediaId;
+
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("command", "FINALIZE");
+        bodyParams.put("media_id", mediaId);
+
+        Map<String, String> header = new HashMap<>();
+        String baseUrlAuth = "https://upload.twitter.com/1.1/media/upload.json";
+        String authString = getAuthString(httpMethod, baseUrlAuth, bodyParams, null);
+        header.put("Authorization", authString);
+
+        String httpResult = HttpUtil.get(baseUrl);
+        logger.info("WLL's log: tweetChunkedUploadFinalize: " + httpResult);
+
+        JSONObject statusResult = JSON.parseObject(httpResult);
+        JSONObject processingInfo = statusResult.getJSONObject("processing_info");
+        if (processingInfo != null) {
+            String state = processingInfo.getString("state");
+            if (state.equals("failed")) {
+                String errorMsg = processingInfo.getJSONObject("error").getString("message");
+                logger.error("WLL's log: ERROR : tweetChunkedUploadFinalize: " + httpResult);
+                return -1;
+            } else if (state.equals("in_progress")){
+                Integer checkAfterSecs = processingInfo.getInteger("check_after_secs");
+                return checkAfterSecs;
+            } else if (state.equals("succeeded")) {
+                return 0;
+            }
+        }
+        return -1;
+    }
+//
+//    public String tweetVideo(String filePath, String mediaType) {
+//
+//    }
 }

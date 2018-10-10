@@ -6,8 +6,8 @@ logging:
 access_token:
   facebook: EAAH0LwYZBkoQBAHvuV4hLN1tHUBPgI1LrH9oKAoFrJw7YNL1XyInlk8XimlAZC8RczBHe79dWIxvaBRqGO1F1dhQ3qwg1e94PUQh43JtsjFMnwp6pE03V1es5uY0dNP3HLVDXZAeUYISqI2tizc1BQDS7MgtNOhOKcJavvYWAZDZD
   twitter:
-    oauthToken: 1042240571274715137-XjqkqMawyIyHBZLhlDKWsPv2O2EKVe
-    oauthTokenSecret: OKiiNHkZgaSuaKywadvnyAwslVL6VWxcBlNhoYXBGNR27
+    oauthToken: 1042240571274715137-iv61x0rEg11eeFkr51XRCJ2eGdYRet
+    oauthTokenSecret: ysjuz8s6LO31jPtcbZ113v9PHfFKgaQ8sVUKjMUEDfnBC
 
 server:
   port: 8443

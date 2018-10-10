@@ -33,7 +33,7 @@ public class UserController {
     public String publishAll() {
         SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateStr = dateformat.format(System.currentTimeMillis());
-        String message = "publishAll: " + dateStr;
+        String message = "一键多发demo，发送时间: " + dateStr;
         String pageRes = oauth2ServiceImp.publishPageWithCharacters(message);
         String groupRes = oauth2ServiceImp.publishGroupWithCharacters(message);
         String twitterRes = oauth2ServiceImp.tweetTest(message);
@@ -107,11 +107,9 @@ public class UserController {
     }
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
-    public String test(String message) {
-        String json = "{\"media_id\":1049489858899501056,\"media_id_string\":\"1049489858899501056\",\"size\":63732,\"expires_after_secs\":86400,\"image\":{\"image_type\":\"image\\/jpeg\",\"w\":800,\"h\":600}}";
-        JSONObject imageResult = JSON.parseObject(json);
-        String mediaId = imageResult.getString("media_id_string");
-        return mediaId;
+    public Long test(String message) {
+        File file = new File("./src/main/resources/test1.mp4");
+        return file.length();
     }
 
     @RequestMapping(value = "/loginTwitter", method = RequestMethod.GET)
@@ -152,8 +150,27 @@ public class UserController {
 
     @RequestMapping(value = "/tweetChunkedUploadInit", method = RequestMethod.GET)
     public String tweetChunkedUploadInit() {
-        String result = oauth2ServiceImp.tweetChunkedUploadInit("./src/main/resources/firstImage.jpg", "image/jpeg");
+        String result = oauth2ServiceImp.tweetChunkedUploadInit("./src/main/resources/test2.mp4", "video/mp4");
         return result;
+    }
+
+    @RequestMapping(value = "/tweetChunkedUploadAppend", method = RequestMethod.GET)
+    public String tweetChunkedUploadAppend(String mediaId) {
+        String result = oauth2ServiceImp.tweetChunkedUploadAppend("./src/main/resources/test2.mp4", mediaId, 0);
+        return result;
+    }
+
+    @RequestMapping(value = "/tweetChunkedUploadFinalize", method = RequestMethod.GET)
+    public Integer tweetChunkedUploadFinalize(String mediaId) {
+        Integer result = oauth2ServiceImp.tweetChunkedUploadFinalize(mediaId);
+        return result;
+    }
+
+    @RequestMapping(value = "/tweetVideo", method = RequestMethod.GET)
+    public String tweetVideo(String mediaId) {
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = dateformat.format(System.currentTimeMillis());
+        return oauth2ServiceImp.tweetTest("一键多发视频demo，发送时间: " + dateStr, mediaId);
     }
 
     @RequestMapping(value = "/facebookChunkedUpload", method = RequestMethod.GET)

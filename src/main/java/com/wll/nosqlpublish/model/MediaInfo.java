@@ -7,6 +7,7 @@ import lombok.Data;
  */
 @Data
 public class MediaInfo {
+    private Integer status;
     private Long mediaId;
     private String mediaIdString;
     private Integer size;
