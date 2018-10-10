@@ -213,7 +213,7 @@ public class Oauth2ServiceImp {
      * @return
      */
     public String facebookChunkedUploadVideoInit(String pageOrGroupId, String filePath, String access_token) {
-        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        String postUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
         Long fileSize = new File(filePath).length();
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("access_token", access_token);
@@ -250,7 +250,7 @@ public class Oauth2ServiceImp {
     public String facebookChunkedUploadChunk(String pageOrGroupId, String access_token,
         String uploadSessionId, String ChunkName,
         BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
-        String postUrl = "https://api.facebook.com/" + pageOrGroupId + "/videos";
+        String postUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("access_token", access_token);
         bodyParams.put("upload_phase", "transfer");
@@ -588,5 +588,29 @@ public class Oauth2ServiceImp {
         String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
         logger.info("WLL's log: TweetChunkedUploadInit: " + httpResult);
         return httpResult;
+    }
+
+    public String tweetChunkedUploadChunks(String segment_index, String mediaId,
+        BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
+
+        String httpMethod = "POST";
+        String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
+        //注意，media相关的，signature 只包含 oauth_* 的参数
+        String authString = getAuthString(httpMethod, baseUrl, null, null);
+
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", authString);
+
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("command", "APPEND");
+        bodyParams.put("media_id", mediaId);
+        bodyParams.put("segment_index", segment_index);
+
+        String multipartFileParam = "media";
+        String multipartFileName = "media" + segment_index;
+
+        return HttpUtil.postChunkInputStream(baseUrl, bodyParams, header, bufferedInputStream,
+            startOffset, endOffset, "video_file_chunk", multipartFileParam,
+            "UTF-8", 40000, 40000);
     }
 }
