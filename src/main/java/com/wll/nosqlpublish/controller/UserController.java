@@ -92,7 +92,7 @@ public class UserController {
     //主页发布视频
     @RequestMapping(value = "/publishPage3", method = RequestMethod.GET)
     public String publishPage3() {
-        String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
+        String file_url = "http://oysf0b7t0.bkt.clouddn.com/8a43ca6f2dac0b605cd024c086436b98.mp4";
         String pageRes = oauth2ServiceImp.publishPageWithVideo(file_url);
         return pageRes;
     }
@@ -114,7 +114,7 @@ public class UserController {
     //在小组中发布视频
     @RequestMapping(value = "/publishGroup3", method = RequestMethod.GET)
     public String publishGroup3() {
-        String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
+        String file_url = "http://oysf0b7t0.bkt.clouddn.com/8a43ca6f2dac0b605cd024c086436b98.mp4";
         String groupRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
         return groupRes;
     }
@@ -231,5 +231,20 @@ public class UserController {
         String filePath = "./src/main/resources/test2.mp4";
         String mediaType = "video/mp4";
         return oauth2ServiceImp.tweetVideoTmp(text, filePath, mediaType);
+    }
+
+    @RequestMapping(value = "/publishVideoOneClick", method = RequestMethod.GET)
+    public String publishVideoOneClick() {
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String text = "一键多发视频demo，发送时间: " + dateformat.format(System.currentTimeMillis());
+        String filePath = "./src/main/resources/test2.mp4";
+        String mediaType = "video/mp4";
+        String twitterResult = oauth2ServiceImp.tweetVideoTmp(text, filePath, mediaType);
+
+        String fileUrl = "http://oysf0b7t0.bkt.clouddn.com/8a43ca6f2dac0b605cd024c086436b98.mp4";
+        String pageRes = oauth2ServiceImp.publishPageWithVideo(fileUrl);
+        String facebookGroupResult = oauth2ServiceImp.publishGroupWithVideo(fileUrl);
+        // TODO: 2018/10/10 返回状态判断
+        return "OK";
     }
 }
