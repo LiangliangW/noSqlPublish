@@ -633,7 +633,11 @@ public class Oauth2ServiceImp {
         bodyParams.put("media_type", UrlEncodeUtil.encode(mediaType));
         String httpResult = HttpUtil.post(baseUrl, bodyParams, header);
         logger.info("WLL's log: TweetChunkedUploadInit: " + httpResult);
-        return httpResult;
+
+        JSONObject initResult = JSON.parseObject(httpResult);
+        String mediaId = initResult.getString("media_id_string");
+
+        return mediaId;
     }
 
     /**
@@ -742,10 +746,22 @@ public class Oauth2ServiceImp {
         }
         return -1;
     }
-//
-//    public String tweetVideo(String filePath, String mediaType) {
-//
-//    }
+
+    public String tweetVideoTmp(String text, String filePath, String mediaType) {
+        String mediaId = tweetChunkedUploadInit(filePath, mediaType);
+        String appendResult = tweetChunkedUploadAppend(filePath, mediaId, 0);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Integer finalizeResult = tweetChunkedUploadFinalize(mediaId);
+        if (finalizeResult == 0) {
+            return tweetTest(text, mediaId);
+        } else {
+            return "fail";
+        }
+    }
 
     public String tweetChunkedUpload(String filePath, String mediaType) {
         String initRes = tweetChunkedUploadInit(filePath, mediaType);
