@@ -9,6 +9,10 @@ access_token:
     oauthToken: 1042240571274715137-XjqkqMawyIyHBZLhlDKWsPv2O2EKVe
     oauthTokenSecret: OKiiNHkZgaSuaKywadvnyAwslVL6VWxcBlNhoYXBGNR27
 
+facebook:
+  appId: 2162335307350013
+  appSecret: b89fc73f8231e7399d75c0fe0bff0b69
+
 server:
   port: 8443
   ssl:

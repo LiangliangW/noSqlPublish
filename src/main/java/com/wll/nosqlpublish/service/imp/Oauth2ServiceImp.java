@@ -39,6 +39,12 @@ public class Oauth2ServiceImp {
     @Value("${access_token.facebook}")
     public String facebookAccessToken;
 
+    @Value("${facebook.appId}")
+    public String facebookAppId;
+
+    @Value("${facebook.appSecret}")
+    public String facebookAppSecret;
+
 
     protected final Log logger = LogFactory.getLog(this.getClass());
 
@@ -53,10 +59,9 @@ public class Oauth2ServiceImp {
 //        String appId = "469354166884422";
 //        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
 
-        //WLL's facebook app id and secret
-        String appId = "469354166884422";
-        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
 
+        String appId = this.facebookAppId;
+        String clientSecret = this.facebookAppSecret;
         String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
@@ -156,8 +161,9 @@ public class Oauth2ServiceImp {
      * @return
      */
     private String publishGroup(Map<String, String> groupParams, String targetUrl){
-        String groupId = "473186779854545";
+//        String groupId = "473186779854545";
 
+        String groupId = "1972058782882587";
         String publishGroupUrl = "https://graph.facebook.com/v3.1/" + groupId + targetUrl;
         groupParams.put("access_token", this.facebookAccessToken);
         String res  = HttpUtil.post(publishGroupUrl, groupParams);
