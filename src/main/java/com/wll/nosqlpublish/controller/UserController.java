@@ -40,6 +40,22 @@ public class UserController {
         return "OK";
     }
 
+    @RequestMapping(value = "/publishAllPhoto", method = RequestMethod.GET)
+    public String publishAllPhoto() {
+        //上传图片至facebook 主页
+        String url = "http://oysf0b7t0.bkt.clouddn.com/focus.jpg";//焦点图片
+        String pageRes = oauth2ServiceImp.publishPageWithPhoto(url);
+        logger.info("facebook's page photo: " + pageRes);
+        //上传图片至facebook 小组
+        String groupRes = oauth2ServiceImp.publishGroupWithPhoto(url);
+        logger.info("facebook's group photo: " + groupRes);
+        //上传图片至twitter
+        String mediaId = oauth2ServiceImp.tweetUploadSingleImage("./src/main/resources/firstImage.jpg");
+        String twitterRes = oauth2ServiceImp.tweetTest("焦点图片", mediaId);
+        logger.info("twitter's photo: " + mediaId);
+        return "成功";
+    }
+
     @GetMapping(value = "/loginFacebook")
     public ModelAndView loginWithOauth() {
         //这个重定向，会访问两次，初始就访问一次，手动输入不会
@@ -80,22 +96,22 @@ public class UserController {
     @RequestMapping(value = "/publishGroup1", method = RequestMethod.GET)
     public String publishGroup1() {
         String message = "publish FaceBook page";
-        String pageRes = oauth2ServiceImp.publishGroupWithCharacters(message);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithCharacters(message);
+        return groupRes;
     }
     //在小组中发布图片
     @RequestMapping(value = "/publishGroup2", method = RequestMethod.GET)
     public String publishGroup2() {
         String url = "http://oyf9q4qzp.bkt.clouddn.com/1514099374.jpeg";
-        String pageRes = oauth2ServiceImp.publishGroupWithPhoto(url);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithPhoto(url);
+        return groupRes;
     }
     //在小组中发布视频
     @RequestMapping(value = "/publishGroup3", method = RequestMethod.GET)
     public String publishGroup3() {
         String file_url = "http://oysf0b7t0.bkt.clouddn.com/527c5fcfc1ed4ac568e9284ebf96d342.mp4";
-        String pageRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
-        return pageRes;
+        String groupRes = oauth2ServiceImp.publishGroupWithVideo(file_url);
+        return groupRes;
     }
 
 

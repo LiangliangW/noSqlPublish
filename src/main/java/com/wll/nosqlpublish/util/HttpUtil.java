@@ -206,7 +206,7 @@ public class HttpUtil {
             resJson.put("code", connection.getResponseCode());
             resJson.put("data", result);
         } catch (IOException e) {
-            LOGGER.error("{}", e.getMessage(), e);
+            logger.error("{}", e.getMessage(), e);
         }
         return resJson.toString();
     }

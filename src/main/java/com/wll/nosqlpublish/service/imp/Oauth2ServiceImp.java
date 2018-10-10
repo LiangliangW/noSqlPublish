@@ -48,8 +48,15 @@ public class Oauth2ServiceImp {
     }
 
     public String getAccessToken(String code){
+
+        //Hinson's facebook app id and secret
+//        String appId = "469354166884422";
+//        String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
+
+        //WLL's facebook app id and secret
         String appId = "469354166884422";
         String clientSecret = "0d7f92e87dc2322c9364fa302d436be5";
+
         String redirectUri = "https://localhost:8443/code";
         String accessTokenUrl = "https://graph.facebook.com/v3.1/oauth/access_token?"
             + "client_id=" + appId
