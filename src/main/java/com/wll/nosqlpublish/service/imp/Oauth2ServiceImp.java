@@ -224,6 +224,63 @@ public class Oauth2ServiceImp {
         return HttpUtil.post(postUrl, bodyParams);
     }
 
+    public String facebookChunkedUploadVideoFinish(String pageOrGroupId, String uploadSessionId, String access_token) {
+        String postUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("access_token", access_token);
+        bodyParams.put("upload_phase", "finish");
+        bodyParams.put("upload_session_id", uploadSessionId);
+        return HttpUtil.post(postUrl, bodyParams);
+    }
+
+    public String facebookChunkedUpload(String pageOrGroupId, String filePath, String accessToken) {
+        String baseUrl = "https://graph.facebook.com/" + pageOrGroupId + "/videos";
+        Long fileSize = new File(filePath).length();
+        Map<String, String> bodyParams = new HashMap<>();
+        bodyParams.put("access_token", accessToken);
+        bodyParams.put("upload_phase", "start");
+        bodyParams.put("file_size", fileSize.toString());
+        String initRes = HttpUtil.post(baseUrl, bodyParams);
+        JSONObject initResJson = JSONObject.parseObject(initRes);
+        String videoId = initResJson.getString("video_id");
+        String uploadSessionId = initResJson.getString("upload_session_id");
+        long startOffset = initResJson.getLong("start_offset");
+        long endOffset = initResJson.getLong("end_offset");
+
+        BufferedInputStream bufferedInputStream = null;
+
+        try {
+            bufferedInputStream = new BufferedInputStream(new FileInputStream(filePath));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+        }
+
+        int chunkIndex = 0;
+        while (startOffset < endOffset) {
+            //上传完毕后，请求返回的startOffset = endOffset
+            String multipartFileName = "chunk" + chunkIndex+".mp4";
+            logger.info("hinson'log: startOffset: " + startOffset);
+            logger.info("hinson'log: endOffset: " + endOffset);
+            String uploadChunkRes = facebookChunkedUploadChunk(pageOrGroupId, accessToken, uploadSessionId,
+                multipartFileName, bufferedInputStream, startOffset, endOffset);
+            logger.info("hinson'log: uploadChunkRes: " + uploadChunkRes);
+            JSONObject uploadChunkResJson = JSONObject.parseObject(uploadChunkRes);
+            JSONObject data = uploadChunkResJson.getJSONObject("data");
+            startOffset = data.getLong("start_offset");
+            endOffset = data.getLong("end_offset");
+        }
+
+        //上传完毕，
+        String finishRes = facebookChunkedUploadVideoFinish(pageOrGroupId, uploadSessionId, accessToken);
+        JSONObject finishResJson = JSONObject.parseObject(finishRes);
+        if (finishResJson.getBoolean("success") == true) {
+            return "上传成功";
+        }else {
+            return "上传失败";
+        }
+    }
+
     public String facebookChunkedUploading(String pageOrGroupId, String filePath, String access_token,
         String uploadSessionId, long startOffset, long endOffset) {
         BufferedInputStream bufferedInputStream = null;
@@ -763,6 +820,7 @@ public class Oauth2ServiceImp {
     }
 
     public String tweetChunkedUpload(String filePath, String mediaType) {
+        //初始化
         String initRes = tweetChunkedUploadInit(filePath, mediaType);
         JSONObject initResJson = JSONObject.parseObject(initRes);
         logger.info("hinson'log: initResJson: " + initResJson);

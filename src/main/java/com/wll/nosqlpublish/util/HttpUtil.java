@@ -190,9 +190,6 @@ public class HttpUtil {
                 out.write(tmpBuffer, 0, readCount);
                 posOffset += readCount;
             }
-            if (posOffset != endOffset + 1) {
-                logger.info("hisnon' log: 上传内容不等于指定大小");
-            }
             out.write("\r\n".getBytes(charset));
 
             out.write(("--" + boundary + "--\r\n").getBytes(charset));

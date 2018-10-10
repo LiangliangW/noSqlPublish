@@ -206,24 +206,33 @@ public class UserController {
         return res;
     }
 
-    @RequestMapping(value = "/facebookChunkedUpload", method = RequestMethod.GET)
-    public String facebookChunkedUpload() {
+
+    /**
+     * 分片上传视频至小组，需要手动提供groupId
+     * 需要loginFacebook才可以使用
+     * @return
+     */
+    @RequestMapping(value = "/facebookChunkedUploadToGroup", method = RequestMethod.GET)
+    public String facebookChunkedUploadToGroup() {
         String filePath = "D:/springboot/2.mp4";
         String groupId = "1972058782882587";
-//        oauth2ServiceImp.facebookAccessToken = "EAAEAfkSI6DkBAE24f6TT4bekbuAaUKVgD5Hp2YpsEWcea4CnH5DdbZCYWC2xfxIv6wohoFnrkbxZAtUfTZAEE1ZBHMtZCCQ7cogczJ8TvhSEQEwP7BVrZAW1Nnu4EZCUVxHe37FintoZCXEZBgX73hHyyJxgxwPpyQsSTlL27989eQeVn47VihSqLDmOh6hNtL0DYEYnWFIKpXHK0EX7iUCDMJtgMeGatZCbbC0Hw4WUVEBwZDZD";
-        String userAccessToken = "EAAeuoevhPZC0BAHmvcpySbfy9cPsABpJSbf230wrIa5dtZBNIZCMKhuzsNDkbpq06cvBoEMn4eN9aWxYVfrJmEcd74bsYK5OSnsNKE4YYnAznhjsUFYkhI73ZA6HCDCP1v03p5hMj9UNd11lOxD7DMOzWc0eqYl18pzklUb1r3G6IQkkvDc2GLyCZCpf24ymK2XK0U9q1uCQjMNdGn4FEy6sZAByPg70xc96yzkfA1gUWQfXBoE2IfPCpAGZAk77LUZD";
+        String userAccessToken = oauth2ServiceImp.facebookAccessToken;
+        String res = oauth2ServiceImp.facebookChunkedUpload(groupId, filePath, userAccessToken);
+        return res;
+    }
 
-        String result1 = oauth2ServiceImp.facebookChunkedUploadVideoInit(groupId, filePath, userAccessToken);
-        logger.info("hinson'log: rseult1: " + result1);
-        JSONObject data = JSONObject.parseObject(result1);
-
-        String uploadSessionId = data.getString("upload_session_id");
-        long startOffset = Long.parseLong(data.getString("start_offset"));
-        long endOffset = Long.parseLong(data.getString("end_offset"));
-        String result2 = oauth2ServiceImp.facebookChunkedUploading(groupId, filePath, userAccessToken,
-            uploadSessionId, startOffset, endOffset);
-        logger.info("hinson'log: result2: " + result2);
-        return result1;
+    /**
+     * 分片上传视频至主页
+     * 需要loginFacebook才可以使用
+     * @return
+     */
+    @RequestMapping(value = "/facebookChunkedUploadToPage", method = RequestMethod.GET)
+    public String facebookChunkedUploadToPage() {
+        String filePath = "D:/springboot/2.mp4";
+        String pageId = "1972058782882587";//WLL 's 主页
+        String pageAccessToken = oauth2ServiceImp.getPageAccessToken(pageId);
+        String res = oauth2ServiceImp.facebookChunkedUpload(pageId, filePath, pageAccessToken);
+        return res;
     }
 
     @RequestMapping(value = "/tweetVideoOneClick", method = RequestMethod.GET)
