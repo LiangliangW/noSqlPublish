@@ -1,6 +1,9 @@
 package com.wll.nosqlpublish.controller;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -194,15 +197,14 @@ public class UserController {
         return oauth2ServiceImp.tweetTest("一键多发视频demo，发送时间: " + dateStr, mediaId);
     }
 
-//    @RequestMapping(value = "/tweetChunkedUpload", method = RequestMethod.GET)
-//    public String tweetChunkedUpload() {
-//        String filePath = "./src/main/resources/douyin1.jpg";
-//        String mediaType = "video/mp4";
-//        String initRes = oauth2ServiceImp.tweetChunkedUploadInit(filePath, mediaType);
-//        JSONObject initResJson = JSONObject.parseObject(initRes);
-//        String mediaId = initResJson.getString("media_id");
-//
-//    }
+    @RequestMapping(value = "/tweetChunkedUpload", method = RequestMethod.GET)
+    public String tweetChunkedUpload() {
+//        String filePath = "./src/main/resources/douyin1.mp4";
+        String filePath = "D:/springboot/3.mp4";
+        String mediaType = "video/mp4";
+        String res = oauth2ServiceImp.tweetChunkedUpload(filePath, mediaType);
+        return res;
+    }
 
     @RequestMapping(value = "/facebookChunkedUpload", method = RequestMethod.GET)
     public String facebookChunkedUpload() {

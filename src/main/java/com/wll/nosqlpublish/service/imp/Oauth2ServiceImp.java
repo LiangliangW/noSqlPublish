@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SignatureException;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -746,27 +747,71 @@ public class Oauth2ServiceImp {
 //
 //    }
 
-    public String tweetChunkedUploadChunks(String segment_index, String mediaId,
+    public String tweetChunkedUpload(String filePath, String mediaType) {
+        String initRes = tweetChunkedUploadInit(filePath, mediaType);
+        JSONObject initResJson = JSONObject.parseObject(initRes);
+        logger.info("hinson'log: initResJson: " + initResJson);
+        String mediaId = initResJson.getString("media_id");
+        logger.info("hinson'log: mediaId: " + mediaId);
+        int chunkIndex = 0;//从0开始
+        BufferedInputStream bufferedInputStream = null;
+        long fileSize = new File(filePath).length();
+        try {
+            bufferedInputStream = new BufferedInputStream(new FileInputStream(filePath));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+        }
+        long startOffSet = 0;
+//        long endOffSet = 1048576;//1Mb
+        long endOffSet = 1048576;
+        logger.info("hisnon's log: fileSize = " + fileSize);
+        while(startOffSet < fileSize) {
+            logger.info("hinson'log: uploadChunkRes: chunkIndex = " + chunkIndex);
+            logger.info("hinson'log: uploadChunkRes: startOffSet = " + startOffSet +" endOffset= " + endOffSet);
+            String uploadChunkRes = tweetChunkedUploadChunks(mediaId, chunkIndex,
+                bufferedInputStream, startOffSet, endOffSet);
+            logger.info("hinson'log: uploadChunkRes: " + uploadChunkRes);
+            chunkIndex++;
+            startOffSet = endOffSet + 1;
+            endOffSet = startOffSet + 1048576; //每次1Mb
+            if(endOffSet > fileSize) {
+                endOffSet = fileSize - 1;
+            }
+        }
+
+        //下面这步应该要等待一段时间后再访问，因为twitter合成视频需要时间
+        //这里视频不大，就直接访问了
+        int mediaStatus = tweetChunkedUploadFinalize(String.valueOf(mediaId));
+        if (mediaStatus == 0) {
+            SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String dateStr = dateformat.format(System.currentTimeMillis());
+            tweetTest("发布自focus后台，时间：" + dateStr, mediaId);
+        }
+        return "mediaStatus: " + mediaStatus;
+    }
+
+    public String tweetChunkedUploadChunks(String mediaId, int segmentIndex,
         BufferedInputStream bufferedInputStream, long startOffset, long endOffset) {
 
         String httpMethod = "POST";
         String baseUrl = "https://upload.twitter.com/1.1/media/upload.json";
-        //注意，media相关的，signature 只包含 oauth_* 的参数
-        String authString = getAuthString(httpMethod, baseUrl, null, null);
-
-        Map<String, String> header = new HashMap<>();
-        header.put("Authorization", authString);
 
         Map<String, String> bodyParams = new HashMap<>();
         bodyParams.put("command", "APPEND");
         bodyParams.put("media_id", mediaId);
-        bodyParams.put("segment_index", segment_index);
+        bodyParams.put("segment_index", String.valueOf(segmentIndex));
+
+        Map<String, String> header = new HashMap<>();
+        String authString = getAuthString(httpMethod, baseUrl, null, null);
+        header.put("Authorization", authString);
+
 
         String multipartFileParam = "media";
-        String multipartFileName = "media" + segment_index;
+        String multipartFileName = "media" + segmentIndex;
 
         return HttpUtil.postChunkInputStream(baseUrl, bodyParams, header, bufferedInputStream,
-            startOffset, endOffset, "video_file_chunk", multipartFileParam,
+            startOffset, endOffset, multipartFileParam,multipartFileName,
             "UTF-8", 40000, 40000);
     }
 }

@@ -81,6 +81,12 @@ public class HttpUtil {
                 }
                 is.close();
             } else {
+                InputStream is = connection.getErrorStream();
+                int readCount;
+                while ((readCount = is.read(BUFFER)) > 0) {
+                    out.write(BUFFER, 0, readCount);
+                }
+                is.close();
                 logger.warn("{} http response code is {}", url, responseCode);
             }
             connection.disconnect();
@@ -125,14 +131,14 @@ public class HttpUtil {
         String multipartFileParam, String multipartFileName,
         String charset, int connectTimeout, int readTimeout) {
 
-        try {
-            /**
-             * 文件输入跳到指定的开始位置
-             */
-            bufferedInputStream.skip(startOffset);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            /**
+//             * 文件输入跳到指定的开始位置
+//             */
+//            bufferedInputStream.skip(startOffset);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         String result = "";
         JSONObject resJson = new JSONObject();
         OutputStream out = null;
@@ -168,17 +174,24 @@ public class HttpUtil {
             out.write(("Content-Disposition: form-data; name=\"" + multipartFileParam + "\"; filename=\"" + multipartFileName + "\"\r\n").getBytes(charset));
             out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes(charset));
 
-            long hasReadCount = startOffset;
+            long posOffset = startOffset;
             int readCount;
-            while ((readCount = bufferedInputStream.read(BUFFER)) > 0) {
-                if (endOffset - hasReadCount >= BUFFER.length){
-                    //剩余要读取的字节数要大于等于BUFFER的长度, write整个BUFFER
-                    out.write(BUFFER, 0, readCount);
-                    hasReadCount += readCount;
-                } else {
-                    out.write(BUFFER, 0, (int)(endOffset - hasReadCount));
-                    break;
-                }
+            while (endOffset - posOffset > BUFFER.length) {
+                //剩余要读取的字节数要大于等于BUFFER的长度, write整个BUFFER
+                readCount = bufferedInputStream.read(BUFFER);
+                out.write(BUFFER, 0, readCount);
+                posOffset += readCount;
+            }
+            if (endOffset - posOffset - 1 > 0) {
+                int leftSize = (int)(endOffset-posOffset+1);
+                byte[] tmpBuffer = new byte[leftSize];
+                //读取剩下的不足BUFFER.length
+                readCount = bufferedInputStream.read(tmpBuffer);
+                out.write(tmpBuffer, 0, readCount);
+                posOffset += readCount;
+            }
+            if (posOffset != endOffset + 1) {
+                logger.info("hisnon' log: 上传内容不等于指定大小");
             }
             out.write("\r\n".getBytes(charset));
 
