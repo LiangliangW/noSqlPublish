@@ -229,7 +229,7 @@ public class UserController {
     @RequestMapping(value = "/facebookChunkedUploadToPage", method = RequestMethod.GET)
     public String facebookChunkedUploadToPage() {
         String filePath = "D:/springboot/2.mp4";
-        String pageId = "1972058782882587";//WLL 's 主页
+        String pageId = "1972058782882587";//默认 WLL 's 主页
         String pageAccessToken = oauth2ServiceImp.getPageAccessToken(pageId);
         String res = oauth2ServiceImp.facebookChunkedUpload(pageId, filePath, pageAccessToken);
         return res;

@@ -1,6 +1,5 @@
 package com.wll.nosqlpublish.util;
 
-import com.alibaba.fastjson.JSON;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -126,6 +125,21 @@ public class HttpUtil {
         return post(url, params, header, files, charset, CONNECT_TIME_OUT, READ_TIME_OUT);
     }
 
+    /**
+     * 以 multipartfile/form-data 方式分片上传文件
+     * @param url post请求的url
+     * @param params 需要的body参数
+     * @param header 需要的header参数
+     * @param bufferedInputStream 文件缓存流
+     * @param startOffset 上传的起始位置（包含这个位置）
+     * @param endOffset 上传的中止位置（包含这个位置）
+     * @param multipartFileParam multipartFile中的name
+     * @param multipartFileName multipartFile中的fileName
+     * @param charset 字符集
+     * @param connectTimeout 超时时长，单位毫秒
+     * @param readTimeout 超时时长，单位毫秒
+     * @return
+     */
     public static String postChunkInputStream(String url, Map<String, String> params, Map<String, String> header,
         BufferedInputStream bufferedInputStream, Long startOffset, Long endOffset,
         String multipartFileParam, String multipartFileName,
@@ -188,7 +202,6 @@ public class HttpUtil {
                 //读取剩下的不足BUFFER.length
                 readCount = bufferedInputStream.read(tmpBuffer);
                 out.write(tmpBuffer, 0, readCount);
-                posOffset += readCount;
             }
             out.write("\r\n".getBytes(charset));
 
